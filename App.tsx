@@ -7,6 +7,7 @@ import { InfoSummary } from './components/InfoSummary';
 import { LostMode } from './components/LostMode';
 import { About } from './components/About';
 import { FinderView } from './components/FinderView';
+import { Register } from './components/Register';
 import { UserProfile, PetProfile } from './types';
 import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router } from 'lucide-react';
 import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase, logQrScan, getRecentQrScans } from './services/dbService';
@@ -23,6 +24,7 @@ const App: React.FC = () => {
   
   // Navigation State
   const [currentView, setCurrentView] = useState<'home' | 'info' | 'settings' | 'lost' | 'about'>('home');
+  const [isRegistering, setIsRegistering] = useState(false);
   
   // Unsaved Changes State (Protection for Lost Mode)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -403,8 +405,16 @@ const App: React.FC = () => {
       );
   }
 
-  // --- RENDER LOGIN ---
+  // --- RENDER LOGIN OR REGISTER ---
   if (!user) {
+    if (isRegistering) {
+        return (
+            <div className="min-h-screen font-sans bg-slate-100 dark:bg-matrix-950 transition-colors duration-300">
+                <Register onBackToLogin={() => setIsRegistering(false)} />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen font-sans bg-slate-100 dark:bg-matrix-950 transition-colors duration-300">
              {updateAvailable && (
@@ -417,6 +427,7 @@ const App: React.FC = () => {
                 onLogin={handleLoginAuth} 
                 initialUsername={qrCode || undefined} 
                 qrStatusMessage={qrMessage}
+                onRegisterClick={() => setIsRegistering(true)}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 {
-  "name": "MatrixC Find Me",
+  "name": "FindMe.mom",
   "description": "Mobil uyumlu, evcil hayvan kayıt ve acil durum iletişim sistemi.",
   "requestFramePermissions": [
     "camera"

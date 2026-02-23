@@ -1,26 +1,18 @@
-
-import React, { useState, useEffect } from 'react';
-import { Loader2, KeyRound } from 'lucide-react';
+import React, { useState } from 'react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { Input } from './ui/Input';
 
-interface LoginProps {
-  onLogin: (username: string, pass: string) => Promise<void>;
-  initialUsername?: string;
-  qrStatusMessage?: string;
-  onRegisterClick?: () => void;
+interface RegisterProps {
+  onBackToLogin: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatusMessage, onRegisterClick }) => {
-  const [username, setUsername] = useState(initialUsername || '');
-  const [password, setPassword] = useState('');
+export const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (initialUsername) {
-        setUsername(initialUsername);
-    }
-  }, [initialUsername]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +20,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
     setError('');
 
     try {
-      await onLogin(username, password);
+      // TODO: Implement registration logic
+      console.log('Registering:', { firstName, lastName, email, phone });
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      alert('Kayıt işlemi veritabanı bağlandığında aktif olacaktır.');
     } catch (err: any) {
-      setError(err.message || 'Giriş veya doğrulama başarısız.');
+      setError(err.message || 'Kayıt başarısız.');
     } finally {
       setLoading(false);
     }
@@ -68,40 +63,44 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
                     FindMe<span className="text-matrix-600">.mom</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                    Güvenli Evcil Hayvan Takip Sistemi
+                    Yeni Hesap Oluştur
                 </p>
             </div>
 
-            {/* Status Message Banner */}
-            {qrStatusMessage && (
-                <div className="mb-6 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-r-lg shadow-sm">
-                    <p className="text-blue-800 dark:text-blue-200 font-medium text-sm leading-relaxed">
-                        {qrStatusMessage}
-                    </p>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <Input
+                        label="Ad"
+                        type="text"
+                        placeholder="Adınız"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                    />
+                    <Input
+                        label="Soyad"
+                        type="text"
+                        placeholder="Soyadınız"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                    />
                 </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-5">
                 <Input
-                    label="QR Kod ID"
-                    type="text"
-                    placeholder="Etiket üzerindeki kod (Örn: MTRX01)"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    label="E-posta"
+                    type="email"
+                    placeholder="ornek@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
-                    readOnly={!!initialUsername} 
-                    className={`font-mono text-center tracking-wider font-bold ${initialUsername ? 'bg-slate-50 text-slate-500 border-slate-200' : ''}`}
                 />
                 <Input
-                    label="Güvenlik PIN'i"
-                    type="password"
-                    placeholder="******"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    label="Telefon"
+                    type="tel"
+                    placeholder="0555 555 55 55"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
-                    className="text-center tracking-[0.5em] font-bold text-lg"
-                    maxLength={6}
-                    rightElement={<KeyRound size={20} className="text-slate-400" />}
                 />
 
                 {error && (
@@ -115,16 +114,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
                     disabled={loading}
                     className="w-full py-4 bg-gradient-to-r from-matrix-600 to-matrix-700 hover:from-matrix-500 hover:to-matrix-600 text-white font-bold rounded-xl shadow-lg shadow-matrix-500/30 dark:shadow-matrix-900/50 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
                 >
-                    {loading ? <Loader2 className="animate-spin" /> : 'Sisteme Giriş Yap'}
+                    {loading ? <Loader2 className="animate-spin" /> : 'Kayıt Ol'}
                 </button>
             </form>
         </div>
 
         <button 
-          onClick={onRegisterClick}
-          className="mt-8 mx-auto block text-center text-sm font-medium text-matrix-600 dark:text-matrix-400 hover:text-matrix-700 dark:hover:text-matrix-300 underline underline-offset-4 transition-colors"
+          onClick={onBackToLogin}
+          className="mt-8 mx-auto flex items-center justify-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
         >
-          Kayıt olmak için tıklayınız
+          <ArrowLeft size={16} />
+          Giriş ekranına dön
         </button>
       </div>
     </div>
