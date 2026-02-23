@@ -71,9 +71,9 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
             {/* Abstract Graphic / Mockup representation */}
             <div className="relative aspect-square rounded-[2rem] lg:rounded-[3rem] bg-gradient-to-tr from-matrix-100 to-blue-50 dark:from-matrix-900/40 dark:to-blue-900/20 border border-white/50 dark:border-white/10 shadow-2xl overflow-hidden flex items-center justify-center p-8 lg:p-12">
                <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/pets/800/800?blur=2')] opacity-20 mix-blend-overlay" />
-               <div className="relative z-10 bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
-                  <div className="flex justify-center mb-4 lg:mb-6">
-                    <div className="w-20 h-20 lg:w-24 lg:h-24">
+               <div className="relative z-10 bg-white dark:bg-slate-900 p-5 lg:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-[80%] max-w-[260px] lg:max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
+                  <div className="flex justify-center mb-3 lg:mb-6">
+                    <div className="w-16 h-16 lg:w-24 lg:h-24">
                         <img src="/logo.png" alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             const parent = e.currentTarget.parentElement;
@@ -81,11 +81,11 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
                         }} />
                     </div>
                   </div>
-                  <h3 className="text-xl lg:text-2xl font-black text-center mb-1 lg:mb-2">MatrixC</h3>
-                  <p className="text-center text-slate-500 dark:text-slate-400 text-xs lg:text-sm font-medium mb-4 lg:mb-6">Katkılarıyla hazırlanmıştır</p>
+                  <h3 className="text-lg lg:text-2xl font-black text-center mb-1 lg:mb-2">MatrixC</h3>
+                  <p className="text-center text-slate-500 dark:text-slate-400 text-[10px] lg:text-sm font-medium mb-3 lg:mb-6">Katkılarıyla hazırlanmıştır</p>
                   <div className="space-y-2 lg:space-y-3">
-                    <div className="h-8 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-[10px] lg:text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
-                    <div className="h-8 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-[10px] lg:text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>
+                    <div className="h-7 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-[9px] lg:text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
+                    <div className="h-7 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-[9px] lg:text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>
                   </div>
                </div>
             </div>
