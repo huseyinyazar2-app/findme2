@@ -17,34 +17,34 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
           </div>
           <span className="text-xl font-black tracking-tight">FindMe<span className="text-matrix-600">.mom</span></span>
         </div>
-        <div className="flex items-center gap-4">
-          <button onClick={onLoginClick} className="text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-matrix-600 dark:hover:text-matrix-400 transition-colors">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button onClick={onLoginClick} className="text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 sm:px-5 py-2.5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-95">
             Giriş Yap
           </button>
-          <button onClick={onRegisterClick} className="text-sm font-bold bg-matrix-600 hover:bg-matrix-700 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-matrix-500/30 transition-all active:scale-95">
+          <button onClick={onRegisterClick} className="text-xs sm:text-sm font-bold bg-matrix-600 hover:bg-matrix-700 text-white px-3 sm:px-5 py-2.5 rounded-xl shadow-lg shadow-matrix-500/30 transition-all active:scale-95">
             Ücretsiz Kayıt Ol
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="w-full max-w-6xl mx-auto px-6 pt-12 pb-24 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1 space-y-8 text-center lg:text-left">
+      <main className="w-full max-w-6xl mx-auto px-6 pt-8 pb-16 relative z-10">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="flex-1 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-matrix-100 dark:bg-matrix-900/50 text-matrix-700 dark:text-matrix-300 text-sm font-bold">
               <Heart size={16} className="text-red-500" />
               <span>Tamamen Ücretsiz & Güvenli</span>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight leading-[1.1]">
               Can Dostunuz <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-matrix-500 to-blue-600">
                 Asla Kaybolmasın
               </span>
             </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
               Akıllı QR etiket sistemi ile evcil hayvanınızın güvende olduğundan emin olun. Onu bulan kişi saniyeler içinde size ulaşsın, konumu anında cebinize gelsin.
             </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
               <button onClick={onRegisterClick} className="w-full sm:w-auto px-8 py-4 bg-matrix-600 hover:bg-matrix-700 text-white font-bold rounded-2xl shadow-xl shadow-matrix-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
                 Hemen Ücretsiz Katıl <ArrowRight size={20} />
               </button>
@@ -54,49 +54,49 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
             </div>
           </div>
           
-          <div className="flex-1 relative w-full max-w-md lg:max-w-none">
+          <div className="flex-1 relative w-full max-w-sm lg:max-w-none mt-8 lg:mt-0">
             {/* Abstract Graphic / Mockup representation */}
-            <div className="relative aspect-square rounded-[3rem] bg-gradient-to-tr from-matrix-100 to-blue-50 dark:from-matrix-900/40 dark:to-blue-900/20 border border-white/50 dark:border-white/10 shadow-2xl overflow-hidden flex items-center justify-center p-12">
+            <div className="relative aspect-square rounded-[2rem] lg:rounded-[3rem] bg-gradient-to-tr from-matrix-100 to-blue-50 dark:from-matrix-900/40 dark:to-blue-900/20 border border-white/50 dark:border-white/10 shadow-2xl overflow-hidden flex items-center justify-center p-8 lg:p-12">
                <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/pets/800/800?blur=2')] opacity-20 mix-blend-overlay" />
-               <div className="relative z-10 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
-                  <div className="flex justify-center mb-6">
-                    <div className="w-24 h-24">
+               <div className="relative z-10 bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
+                  <div className="flex justify-center mb-4 lg:mb-6">
+                    <div className="w-20 h-20 lg:w-24 lg:h-24">
                         <img src="/logo.png" alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             const parent = e.currentTarget.parentElement;
-                            if(parent) parent.innerHTML = '<div class="w-20 h-20 bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold">Logo</div>'
+                            if(parent) parent.innerHTML = '<div class="w-full h-full bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold">Logo</div>'
                         }} />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-black text-center mb-2">MatrixC</h3>
-                  <p className="text-center text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Katkılarıyla hazırlanmıştır</p>
-                  <div className="space-y-3">
-                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
-                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>
+                  <h3 className="text-xl lg:text-2xl font-black text-center mb-1 lg:mb-2">MatrixC</h3>
+                  <p className="text-center text-slate-500 dark:text-slate-400 text-xs lg:text-sm font-medium mb-4 lg:mb-6">Katkılarıyla hazırlanmıştır</p>
+                  <div className="space-y-2 lg:space-y-3">
+                    <div className="h-8 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-[10px] lg:text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
+                    <div className="h-8 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-[10px] lg:text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>
                   </div>
                </div>
             </div>
             
             {/* Floating Badges */}
-            <div className="absolute -top-6 -right-6 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '3s' }}>
-                <div className="flex items-center gap-3">
-                    <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full text-red-600 dark:text-red-400">
-                        <MapPin size={20} />
+            <div className="absolute -top-4 -right-4 lg:-top-6 lg:-right-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '3s' }}>
+                <div className="flex items-center gap-2 lg:gap-3">
+                    <div className="bg-red-100 dark:bg-red-900/30 p-1.5 lg:p-2 rounded-full text-red-600 dark:text-red-400">
+                        <MapPin size={16} className="lg:w-5 lg:h-5" />
                     </div>
                     <div>
-                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Anında</p>
-                        <p className="text-sm font-black">Konum Bildirimi</p>
+                        <p className="text-[10px] lg:text-xs font-bold text-slate-500 dark:text-slate-400">Anında</p>
+                        <p className="text-xs lg:text-sm font-black">Konum Bildirimi</p>
                     </div>
                 </div>
             </div>
-            <div className="absolute -bottom-6 -left-6 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '4s' }}>
-                <div className="flex items-center gap-3">
-                    <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full text-green-600 dark:text-green-400">
-                        <ShieldCheck size={20} />
+            <div className="absolute -bottom-4 -left-4 lg:-bottom-6 lg:-left-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '4s' }}>
+                <div className="flex items-center gap-2 lg:gap-3">
+                    <div className="bg-green-100 dark:bg-green-900/30 p-1.5 lg:p-2 rounded-full text-green-600 dark:text-green-400">
+                        <ShieldCheck size={16} className="lg:w-5 lg:h-5" />
                     </div>
                     <div>
-                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">%100</p>
-                        <p className="text-sm font-black">Güvenli Altyapı</p>
+                        <p className="text-[10px] lg:text-xs font-bold text-slate-500 dark:text-slate-400">%100</p>
+                        <p className="text-xs lg:text-sm font-black">Güvenli Altyapı</p>
                     </div>
                 </div>
             </div>
@@ -104,8 +104,26 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
         </div>
       </main>
 
+      {/* Store Section */}
+      <section className="py-12 relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+            <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-3xl p-8 border border-orange-200 dark:border-orange-800/30 shadow-lg">
+                <h3 className="text-2xl font-black text-orange-600 dark:text-orange-400 mb-2">Henüz akıllı tasmanız yok mu?</h3>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 font-medium">Hemen mağazamızı ziyaret edin ve can dostunuz için en uygun tasmayı seçin.</p>
+                <a 
+                    href="https://www.trendyol.com" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95"
+                >
+                    Mağazayı Ziyaret Et <ArrowRight size={18} />
+                </a>
+            </div>
+        </div>
+      </section>
+
       {/* Features Section */}
-      <section className="bg-white dark:bg-slate-900 py-24 relative z-10 border-t border-slate-200 dark:border-slate-800">
+      <section className="bg-white dark:bg-slate-900 py-16 lg:py-24 relative z-10 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-16">
                 <h2 className="text-3xl lg:text-4xl font-black tracking-tight mb-4">Nasıl Çalışır?</h2>

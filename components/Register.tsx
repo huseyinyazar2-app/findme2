@@ -121,14 +121,6 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
         </div>
 
         <div className="mt-8 flex flex-col items-center gap-4">
-          <button 
-            onClick={onBackToLogin}
-            className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Giriş ekranına dön
-          </button>
-          
           {onBackToHome && (
             <button 
               onClick={onBackToHome}
