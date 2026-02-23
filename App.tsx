@@ -76,9 +76,9 @@ const App: React.FC = () => {
             localStorage.setItem('matrixc_app_version', APP_VERSION);
         }
 
-        // 2. Check URL for QR Code (/qr/CODE)
+        // 2. Check URL for QR Code (/pet/CODE)
         const path = window.location.pathname;
-        const qrMatch = path.match(/\/qr\/([a-zA-Z0-9]+)/);
+        const qrMatch = path.match(/\/pet\/([a-zA-Z0-9]+)/);
         
         if (qrMatch && qrMatch[1]) {
             const code = qrMatch[1];

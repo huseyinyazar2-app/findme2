@@ -30,7 +30,7 @@ Alanlar (Columns):
   2. 'dolu' -> Etiket bir kullanıcıya atandı. (Giriş/Profil ekranı açılır)
   
 - full_url (TEXT, Opsiyonel): 
-  QR kodun tarandığında gittiği tam URL (Örn: https://matrixc.app/qr/MTRX01).
+  QR kodun tarandığında gittiği tam URL (Örn: https://findme.mom/pet/MTRX01).
 
 --------------------------------------------------------------------------------
 2. TABLO: Find_Users
