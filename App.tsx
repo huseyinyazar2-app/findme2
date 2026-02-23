@@ -8,6 +8,7 @@ import { LostMode } from './components/LostMode';
 import { About } from './components/About';
 import { FinderView } from './components/FinderView';
 import { Register } from './components/Register';
+import { Landing } from './components/Landing';
 import { UserProfile, PetProfile } from './types';
 import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router } from 'lucide-react';
 import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase, logQrScan, getRecentQrScans } from './services/dbService';
@@ -25,6 +26,7 @@ const App: React.FC = () => {
   // Navigation State
   const [currentView, setCurrentView] = useState<'home' | 'info' | 'settings' | 'lost' | 'about'>('home');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
   
   // Unsaved Changes State (Protection for Lost Mode)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -124,7 +126,10 @@ const App: React.FC = () => {
 
         } else {
             // Normal load (not via QR)
-            checkSession();
+            const hasSession = await checkSession();
+            if (!hasSession) {
+                setShowLanding(true);
+            }
         }
     };
 
@@ -142,17 +147,18 @@ const App: React.FC = () => {
       } else {
           setQrMessage('Geçersiz veya Tanımsız QR Kod.');
       }
-      checkSession();
+      // Pass code to checkSession to avoid state race condition
+      checkSession(false, code);
   };
 
-  const checkSession = async (ignoreQrMismatch = false) => {
+  const checkSession = async (ignoreQrMismatch = false, currentQrCode: string | null = qrCode): Promise<boolean> => {
         const savedUserStr = localStorage.getItem('matrixc_user_session');
         if (savedUserStr && !isFinderMode) {
              const sessionUser = JSON.parse(savedUserStr);
              
              // If accessed via QR, ensure logged in user matches QR owner
-             if (qrCode && !ignoreQrMismatch && sessionUser.username !== qrCode) {
-                 return;
+             if (currentQrCode && !ignoreQrMismatch && sessionUser.username !== currentQrCode) {
+                 return false;
              }
 
              setUser(sessionUser);
@@ -167,7 +173,9 @@ const App: React.FC = () => {
              } else {
                  setCurrentView('home');
              }
+             return true;
         }
+        return false;
   }
 
   const fetchScansForOwner = async (username: string) => {
@@ -405,8 +413,20 @@ const App: React.FC = () => {
       );
   }
 
-  // --- RENDER LOGIN OR REGISTER ---
+  // --- RENDER LOGIN OR REGISTER OR LANDING ---
   if (!user) {
+    if (showLanding) {
+        return (
+            <Landing 
+                onLoginClick={() => setShowLanding(false)} 
+                onRegisterClick={() => {
+                    setShowLanding(false);
+                    setIsRegistering(true);
+                }} 
+            />
+        );
+    }
+
     if (isRegistering) {
         return (
             <div className="min-h-screen font-sans bg-slate-100 dark:bg-matrix-950 transition-colors duration-300">
