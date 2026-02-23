@@ -60,16 +60,19 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
                <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/pets/800/800?blur=2')] opacity-20 mix-blend-overlay" />
                <div className="relative z-10 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-full max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                   <div className="flex justify-center mb-6">
-                    <div className="p-4 bg-matrix-50 dark:bg-matrix-900/50 rounded-2xl">
-                        <QrCode size={64} className="text-matrix-600" />
+                    <div className="w-24 h-24">
+                        <img src="/logo.png" alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if(parent) parent.innerHTML = '<div class="w-20 h-20 bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold">Logo</div>'
+                        }} />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-black text-center mb-2">FindMe.mom</h3>
-                  <p className="text-center text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Akıllı Evcil Hayvan Etiketi</p>
+                  <h3 className="text-2xl font-black text-center mb-2">MatrixC</h3>
+                  <p className="text-center text-slate-500 dark:text-slate-400 text-sm font-medium mb-6">Katkılarıyla hazırlanmıştır</p>
                   <div className="space-y-3">
-                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full" />
-                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto" />
-                    <div className="h-12 bg-matrix-600 rounded-xl w-full mt-6" />
+                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
+                    <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>
                   </div>
                </div>
             </div>
@@ -144,6 +147,26 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
             </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-slate-400 py-12 relative z-10">
+        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8 text-center md:text-left">
+            <div>
+                <h4 className="text-white font-bold text-lg mb-4">FindMe.mom</h4>
+                <p className="text-sm">Can dostlarınız için akıllı ve güvenli QR etiket sistemi.</p>
+            </div>
+            <div>
+                <h4 className="text-white font-bold text-lg mb-4">İletişim</h4>
+                <p className="text-sm mb-2">E-posta: <a href="mailto:findme@matrixc.com.tr" className="hover:text-white transition-colors">findme@matrixc.com.tr</a></p>
+                <p className="text-sm">Instagram: <a href="https://instagram.com/matrixc" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">@matrixc</a></p>
+            </div>
+            <div>
+                <h4 className="text-white font-bold text-lg mb-4">Geliştirici</h4>
+                <p className="text-sm mb-2">MatrixC Teknoloji</p>
+                <a href="https://matrixc.com.tr" target="_blank" rel="noreferrer" className="text-sm hover:text-white transition-colors underline underline-offset-4">www.matrixc.com.tr</a>
+            </div>
+        </div>
+      </footer>
 
       {/* Ambient Backgrounds */}
       <div className="fixed top-[-20%] left-[-10%] w-[70%] h-[70%] bg-matrix-200/30 dark:bg-matrix-900/10 rounded-full blur-[120px] pointer-events-none z-0" />

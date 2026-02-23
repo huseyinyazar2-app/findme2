@@ -430,7 +430,13 @@ const App: React.FC = () => {
     if (isRegistering) {
         return (
             <div className="min-h-screen font-sans bg-slate-100 dark:bg-matrix-950 transition-colors duration-300">
-                <Register onBackToLogin={() => setIsRegistering(false)} />
+                <Register 
+                    onBackToLogin={() => setIsRegistering(false)} 
+                    onBackToHome={() => {
+                        setIsRegistering(false);
+                        setShowLanding(true);
+                    }}
+                />
             </div>
         );
     }
@@ -448,6 +454,7 @@ const App: React.FC = () => {
                 initialUsername={qrCode || undefined} 
                 qrStatusMessage={qrMessage}
                 onRegisterClick={() => setIsRegistering(true)}
+                onBackToHome={!qrCode ? () => setShowLanding(true) : undefined}
             />
         </div>
     );

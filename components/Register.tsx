@@ -4,9 +4,10 @@ import { Input } from './ui/Input';
 
 interface RegisterProps {
   onBackToLogin: () => void;
+  onBackToHome?: () => void;
 }
 
-export const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
+export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -119,13 +120,24 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin }) => {
             </form>
         </div>
 
-        <button 
-          onClick={onBackToLogin}
-          className="mt-8 mx-auto flex items-center justify-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Giriş ekranına dön
-        </button>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <button 
+            onClick={onBackToLogin}
+            className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Giriş ekranına dön
+          </button>
+          
+          {onBackToHome && (
+            <button 
+              onClick={onBackToHome}
+              className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+            >
+              Ana sayfaya dön
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

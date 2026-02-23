@@ -8,9 +8,10 @@ interface LoginProps {
   initialUsername?: string;
   qrStatusMessage?: string;
   onRegisterClick?: () => void;
+  onBackToHome?: () => void;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatusMessage, onRegisterClick }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatusMessage, onRegisterClick, onBackToHome }) => {
   const [username, setUsername] = useState(initialUsername || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -120,12 +121,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
             </form>
         </div>
 
-        <button 
-          onClick={onRegisterClick}
-          className="mt-8 mx-auto block text-center text-sm font-medium text-matrix-600 dark:text-matrix-400 hover:text-matrix-700 dark:hover:text-matrix-300 underline underline-offset-4 transition-colors"
-        >
-          Kayıt olmak için tıklayınız
-        </button>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <button 
+            onClick={onRegisterClick}
+            className="text-sm font-medium text-matrix-600 dark:text-matrix-400 hover:text-matrix-700 dark:hover:text-matrix-300 underline underline-offset-4 transition-colors"
+          >
+            Kayıt olmak için tıklayınız
+          </button>
+          
+          {onBackToHome && (
+            <button 
+              onClick={onBackToHome}
+              className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+            >
+              Ana sayfaya dön
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
