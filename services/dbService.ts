@@ -228,49 +228,76 @@ export const uploadPetPhoto = async (file: File): Promise<string | null> => {
 
 // --- Auth & User Operations ---
 
-export const loginOrRegister = async (shortCode: string, inputPin: string): Promise<{ success: boolean; user?: UserProfile; error?: string; isNew?: boolean }> => {
+export const loginOrRegister = async (identifier: string, inputPin: string): Promise<{ success: boolean; user?: UserProfile; error?: string; isNew?: boolean }> => {
     try {
-        // 1. ADIM: QR_Kod tablosundan PIN ve STATUS doğrula
-        const { data: qrData, error: qrError } = await supabase
-            .from('QR_Kod')
-            .select('*')
-            .eq('short_code', shortCode)
-            .single();
+        const isEmail = identifier.includes('@');
 
-        if (qrError || !qrData) {
-            return { success: false, error: 'Geçersiz QR Kod' };
-        }
-
-        const dbPin = String(qrData.pin).trim();
-        const userPin = String(inputPin).trim();
-
-        if (dbPin !== userPin) {
-            return { success: false, error: 'Hatalı PIN Kodu' };
-        }
-
-        // 2. ADIM: Status'a göre işlem yap
-        if (qrData.status === 'boş') {
-            const tempUser = createTempProfile(shortCode, userPin);
-            return { success: true, user: tempUser, isNew: true };
-        
-        } else {
-            const { data: existingUser } = await supabase
+        if (isEmail) {
+            // E-posta ile giriş
+            const { data: existingUser, error: userError } = await supabase
                 .from('Find_Users')
                 .select('*')
-                .eq('qr_code', shortCode) 
+                .eq('email', identifier)
                 .single();
 
-            if (existingUser) {
-                const profile = mapDbUserToProfile(existingUser);
-                if (!profile.password || profile.password.trim() === '') {
-                    profile.password = dbPin;
-                }
-                return { success: true, user: profile, isNew: false };
-            } else {
-                // Hatalı durum düzeltme
-                await supabase.from('QR_Kod').update({ status: 'boş' }).eq('short_code', shortCode);
+            if (userError || !existingUser) {
+                return { success: false, error: 'E-posta adresi bulunamadı.' };
+            }
+
+            const dbPassword = String(existingUser.password).trim();
+            const userPin = String(inputPin).trim();
+
+            if (dbPassword !== userPin) {
+                return { success: false, error: 'Hatalı Şifre/PIN Kodu' };
+            }
+
+            const profile = mapDbUserToProfile(existingUser);
+            return { success: true, user: profile, isNew: false };
+        } else {
+            // QR Kod ile giriş
+            const shortCode = identifier;
+            // 1. ADIM: QR_Kod tablosundan PIN ve STATUS doğrula
+            const { data: qrData, error: qrError } = await supabase
+                .from('QR_Kod')
+                .select('*')
+                .eq('short_code', shortCode)
+                .single();
+
+            if (qrError || !qrData) {
+                return { success: false, error: 'Geçersiz QR Kod' };
+            }
+
+            const dbPin = String(qrData.pin).trim();
+            const userPin = String(inputPin).trim();
+
+            if (dbPin !== userPin) {
+                return { success: false, error: 'Hatalı PIN Kodu' };
+            }
+
+            // 2. ADIM: Status'a göre işlem yap
+            if (qrData.status === 'boş') {
                 const tempUser = createTempProfile(shortCode, userPin);
                 return { success: true, user: tempUser, isNew: true };
+            
+            } else {
+                const { data: existingUser } = await supabase
+                    .from('Find_Users')
+                    .select('*')
+                    .eq('qr_code', shortCode) 
+                    .single();
+
+                if (existingUser) {
+                    const profile = mapDbUserToProfile(existingUser);
+                    if (!profile.password || profile.password.trim() === '') {
+                        profile.password = dbPin;
+                    }
+                    return { success: true, user: profile, isNew: false };
+                } else {
+                    // Hatalı durum düzeltme
+                    await supabase.from('QR_Kod').update({ status: 'boş' }).eq('short_code', shortCode);
+                    const tempUser = createTempProfile(shortCode, userPin);
+                    return { success: true, user: tempUser, isNew: true };
+                }
             }
         }
     } catch (e: any) {

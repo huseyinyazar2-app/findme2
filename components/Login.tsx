@@ -84,9 +84,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <Input
-                    label="QR Kod ID"
+                    label="QR Kod veya E-posta"
                     type="text"
-                    placeholder="Etiket üzerindeki kod (Örn: MTRX01)"
+                    placeholder="Örn: MTRX01 veya ornek@email.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required

@@ -44,6 +44,19 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
               Dijital QR künye sistemi ile evcil hayvanınızın güvende olduğundan emin olun. Onu bulan kişi saniyeler içinde size ulaşsın, konumu anında cebinize gelsin.
             </p>
+            
+            {/* Tasma Image Area */}
+            <div className="w-full max-w-sm mx-auto lg:mx-0 mt-6 mb-8">
+                <img 
+                    src="/tasma.png" 
+                    alt="Akıllı QR Künyeli Tasma" 
+                    className="w-full h-auto object-contain drop-shadow-xl"
+                    onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                    }}
+                />
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
               <button onClick={onRegisterClick} className="w-full sm:w-auto px-8 py-4 bg-matrix-600 hover:bg-matrix-700 text-white font-bold rounded-2xl shadow-xl shadow-matrix-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
                 Hemen Ücretsiz Katıl <ArrowRight size={20} />
