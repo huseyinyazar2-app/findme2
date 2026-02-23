@@ -28,7 +28,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
       </nav>
 
       {/* Hero Section */}
-      <main className="w-full max-w-6xl mx-auto px-6 pt-8 pb-16 relative z-10">
+      <main className="w-full max-w-6xl mx-auto px-6 pt-8 pb-8 relative z-10">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
           <div className="flex-1 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-matrix-100 dark:bg-matrix-900/50 text-matrix-700 dark:text-matrix-300 text-sm font-bold">
@@ -42,7 +42,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
               </span>
             </h1>
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Akıllı QR etiket sistemi ile evcil hayvanınızın güvende olduğundan emin olun. Onu bulan kişi saniyeler içinde size ulaşsın, konumu anında cebinize gelsin.
+              Dijital QR künye sistemi ile evcil hayvanınızın güvende olduğundan emin olun. Onu bulan kişi saniyeler içinde size ulaşsın, konumu anında cebinize gelsin.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start pt-2">
               <button onClick={onRegisterClick} className="w-full sm:w-auto px-8 py-4 bg-matrix-600 hover:bg-matrix-700 text-white font-bold rounded-2xl shadow-xl shadow-matrix-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 text-lg">
@@ -105,19 +105,37 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
       </main>
 
       {/* Store Section */}
-      <section className="py-12 relative z-10">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-            <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-3xl p-8 border border-orange-200 dark:border-orange-800/30 shadow-lg">
-                <h3 className="text-2xl font-black text-orange-600 dark:text-orange-400 mb-2">Henüz akıllı tasmanız yok mu?</h3>
-                <p className="text-slate-600 dark:text-slate-300 mb-6 font-medium">Hemen mağazamızı ziyaret edin ve can dostunuz için en uygun tasmayı seçin.</p>
-                <a 
-                    href="https://www.trendyol.com" 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95"
-                >
-                    Mağazayı Ziyaret Et <ArrowRight size={18} />
-                </a>
+      <section className="py-4 relative z-10">
+        <div className="max-w-5xl mx-auto px-6">
+            <div className="bg-gradient-to-r from-matrix-50 to-blue-50 dark:from-matrix-900/20 dark:to-blue-900/20 rounded-3xl p-8 lg:p-10 border border-matrix-100 dark:border-matrix-800/30 shadow-lg">
+                <div className="text-center mb-8">
+                    <h3 className="text-2xl lg:text-3xl font-black text-slate-800 dark:text-white mb-3">Sistemi Nasıl Kullanabilirsiniz?</h3>
+                    <p className="text-slate-600 dark:text-slate-400 font-medium">FindMe.mom tamamen ücretsiz bir altyapıdır. Sisteme dahil olmak için iki seçeneğiniz var:</p>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full">
+                        <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-matrix-100 dark:bg-matrix-900/50 text-matrix-600">
+                            <QrCode size={24} />
+                        </div>
+                        <h4 className="font-bold text-xl mb-3 text-slate-800 dark:text-white">1. Kendi Künyenizi Oluşturun</h4>
+                        <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">Tamamen ücretsiz kayıt olup kendi QR kodunuzu oluşturabilir, çıktısını alarak mevcut tasmanıza ekleyebilirsiniz.</p>
+                        <button onClick={onRegisterClick} className="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-bold py-3 px-6 rounded-xl transition-colors w-full sm:w-auto">
+                            Ücretsiz Kayıt Ol <ArrowRight size={18} />
+                        </button>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-slate-800 p-6 lg:p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full">
+                        <div className="mb-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/50 text-orange-600">
+                            <Heart size={24} />
+                        </div>
+                        <h4 className="font-bold text-xl mb-3 text-slate-800 dark:text-white">2. Hazır Tasarım Satın Alın</h4>
+                        <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">Dilerseniz sisteme entegre, suya dayanıklı ve şık tasarımlı hazır QR künyeli tasmalarımızdan sipariş verebilirsiniz.</p>
+                        <a href="https://www.trendyol.com" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95 w-full sm:w-auto">
+                            Mağazayı Ziyaret Et <ArrowRight size={18} />
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
       </section>
@@ -149,7 +167,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
                     </div>
                     <h3 className="text-xl font-bold mb-3">QR Kodunuzu Eşleştirin</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
-                        Satın aldığınız veya edindiğiniz akıllı tasmadaki QR kodu profilinizle eşleştirin.
+                        Sistemden ücretsiz oluşturduğunuz veya mağazamızdan edindiğiniz QR kodlu künyeyi profilinizle eşleştirin.
                     </p>
                 </div>
                 
