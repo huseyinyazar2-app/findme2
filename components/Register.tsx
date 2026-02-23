@@ -4,6 +4,8 @@ import { Input } from './ui/Input';
 import { supabase } from '../services/dbService';
 import { QRCodeSVG } from 'qrcode.react';
 
+import { formatPhoneNumber } from '../constants';
+
 interface RegisterProps {
   onBackToLogin: () => void;
   onBackToHome?: () => void;
@@ -36,6 +38,21 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        setError('Lütfen geçerli bir e-posta adresi giriniz.');
+        setLoading(false);
+        return;
+    }
+
+    const unformattedPhone = phone.replace(/\s/g, '');
+    if (unformattedPhone.length !== 11 || !unformattedPhone.startsWith('05')) {
+        setError('Lütfen geçerli bir telefon numarası giriniz (Örn: 0555 555 55 55).');
+        setLoading(false);
+        return;
+    }
 
     try {
       // 1. Check if email already exists
@@ -70,9 +87,17 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
       // 4. Create QR_Kod entry
       const { error: qrError } = await supabase
         .from('QR_Kod')
-        .insert([{ short_code: shortCode, pin: pin, status: 'dolu' }]);
+        .insert([{ 
+            short_code: shortCode, 
+            pin: pin, 
+            status: 'dolu',
+            full_url: `https://findme.mom/pet/${shortCode}`
+        }]);
 
-      if (qrError) throw new Error('QR Kod oluşturulurken bir hata oluştu.');
+      if (qrError) {
+          console.error("QR Insert Error:", qrError);
+          throw new Error(`QR Kod oluşturulurken bir hata oluştu: ${qrError.message}`);
+      }
 
       // 5. Create Find_Users entry
       const userPayload = {
@@ -92,9 +117,10 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
         .insert([userPayload]);
 
       if (userError) {
+        console.error("User Insert Error:", userError);
         // Rollback QR_Kod if user creation fails
         await supabase.from('QR_Kod').delete().eq('short_code', shortCode);
-        throw new Error('Kullanıcı oluşturulurken bir hata oluştu.');
+        throw new Error(`Kullanıcı oluşturulurken bir hata oluştu: ${userError.message}`);
       }
 
       // Success! Show the QR code screen
@@ -261,8 +287,9 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
                     type="tel"
                     placeholder="0555 555 55 55"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhoneNumber(e.target.value))}
                     required
+                    maxLength={15}
                 />
 
                 {error && (
