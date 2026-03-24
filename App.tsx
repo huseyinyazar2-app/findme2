@@ -9,13 +9,15 @@ import { About } from './components/About';
 import { FinderView } from './components/FinderView';
 import { Register } from './components/Register';
 import { Landing } from './components/Landing';
+import { Admin } from './components/Admin';
 import { UserProfile, PetProfile } from './types';
 import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router, Activity } from 'lucide-react';
-import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans } from './services/dbService';
+import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans, loginAdmin } from './services/dbService';
 import { APP_VERSION } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [petProfile, setPetProfile] = useState<PetProfile | null>(null);
   
   // Finder Mode State
@@ -152,6 +154,12 @@ const App: React.FC = () => {
   };
 
   const checkSession = async (ignoreQrMismatch = false, currentQrCode: string | null = qrCode): Promise<boolean> => {
+        const adminSession = localStorage.getItem('matrixc_admin_session');
+        if (adminSession === 'true') {
+            setIsAdmin(true);
+            return true;
+        }
+
         const savedUserStr = localStorage.getItem('matrixc_user_session');
         if (savedUserStr && !isFinderMode) {
              const sessionUser = JSON.parse(savedUserStr);
@@ -244,6 +252,17 @@ const App: React.FC = () => {
   };
 
   const handleLoginAuth = async (username: string, pass: string) => {
+    if (username === 'admin') {
+        const isAdminValid = await loginAdmin(username, pass);
+        if (isAdminValid) {
+            setIsAdmin(true);
+            localStorage.setItem('matrixc_admin_session', 'true');
+            return;
+        } else {
+            throw new Error("Admin şifresi hatalı");
+        }
+    }
+
     const result = await loginOrRegister(username, pass);
 
     if (result.success && result.user) {
@@ -277,9 +296,11 @@ const App: React.FC = () => {
         }
     }
     setUser(null);
+    setIsAdmin(false);
     setPetProfile(null);
     setShowScanAlert(false);
     localStorage.removeItem('matrixc_user_session');
+    localStorage.removeItem('matrixc_admin_session');
     
     if (qrCode) {
         window.location.reload();
@@ -413,6 +434,11 @@ const App: React.FC = () => {
              onLoginClick={() => setIsFinderMode(false)} 
           />
       );
+  }
+
+  // --- RENDER ADMIN ---
+  if (isAdmin) {
+      return <Admin onLogout={handleLogout} />;
   }
 
   // --- RENDER LOGIN OR REGISTER OR LANDING ---

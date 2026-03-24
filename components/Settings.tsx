@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { UserProfile, ContactPreference } from '../types';
 import { Input } from './ui/Input';
-import { Phone, Check, Shield, User, KeyRound, Save } from 'lucide-react';
+import { Phone, Check, Shield, User, KeyRound, Save, MessageSquare, Send, Loader2 } from 'lucide-react';
 import { formatPhoneNumber } from '../constants';
+import { sendMessageToAdmin } from '../services/dbService';
 
 interface SettingsProps {
   user: UserProfile;
@@ -33,6 +34,35 @@ export const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, currentT
   const [emPhone, setEmPhone] = useState(user.emergencyContactPhone || '');
   const [emMessage, setEmMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
+  const [contactSubject, setContactSubject] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactStatus, setContactStatus] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+  const handleSendContact = async () => {
+      if (!contactSubject || !contactMessage) {
+          setContactStatus({ type: 'error', text: 'Lütfen konu ve mesaj alanlarını doldurun.' });
+          return;
+      }
+      setContactLoading(true);
+      const success = await sendMessageToAdmin(
+          null, // user.id doesn't exist, we can use null or username
+          user.username,
+          user.email || null,
+          contactSubject,
+          contactMessage,
+          'contact'
+      );
+      setContactLoading(false);
+      if (success) {
+          setContactStatus({ type: 'success', text: 'Mesajınız başarıyla gönderildi.' });
+          setContactSubject('');
+          setContactMessage('');
+      } else {
+          setContactStatus({ type: 'error', text: 'Mesaj gönderilirken bir hata oluştu.' });
+      }
+      setTimeout(() => setContactStatus(null), 3000);
+  };
 
   const updateField = (field: keyof UserProfile, value: any) => {
     onUpdateUser({ ...user, [field]: value });
@@ -317,6 +347,46 @@ export const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, currentT
             </button>
           </section>
       )}
+
+      {/* 5. Contact Admin (İletişim / Yardım) */}
+      <section className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl shadow-slate-200/60 dark:shadow-black/20 ring-1 ring-black/5 dark:ring-white/10 space-y-4">
+        <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+            <MessageSquare size={16} className="text-matrix-500" /> İletişim / Yardım
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Sistem yöneticisine mesaj gönderin. Sorunlarınızı veya önerilerinizi bize iletebilirsiniz.
+        </p>
+        
+        <div className="space-y-3">
+             <Input 
+                type="text"
+                placeholder="Konu"
+                value={contactSubject}
+                onChange={(e) => setContactSubject(e.target.value)}
+                className="!mb-0"
+            />
+            <textarea 
+                placeholder="Mesajınız..."
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-matrix-500/50 resize-none h-24"
+            />
+            
+            <button 
+                onClick={handleSendContact}
+                disabled={contactLoading}
+                className="w-full bg-matrix-600 hover:bg-matrix-700 text-white py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+                {contactLoading ? <Loader2 className="animate-spin" size={18} /> : <><Send size={18} /> Mesajı Gönder</>}
+            </button>
+
+            {contactStatus && (
+                <div className={`flex items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold animate-in fade-in ${contactStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    {contactStatus.text}
+                </div>
+            )}
+        </div>
+      </section>
     </div>
   );
 };

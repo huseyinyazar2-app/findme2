@@ -261,6 +261,102 @@ export const uploadPetPhoto = async (file: File): Promise<string | null> => {
     });
 };
 
+// --- Admin Operations ---
+
+export const loginAdmin = async (username: string, pass: string): Promise<boolean> => {
+    try {
+        const result = await turso.execute({
+            sql: "SELECT * FROM Admin_Users WHERE username = ? AND password = ?",
+            args: [username, pass]
+        });
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error("Error logging in admin:", error);
+        return false;
+    }
+};
+
+export const updateAdminPassword = async (username: string, newPass: string): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "UPDATE Admin_Users SET password = ? WHERE username = ?",
+            args: [newPass, username]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error updating admin password:", error);
+        return false;
+    }
+};
+
+export const sendMessageToAdmin = async (
+    userId: string | null,
+    username: string | null,
+    email: string | null,
+    subject: string,
+    message: string,
+    type: 'forgot_password' | 'contact'
+): Promise<boolean> => {
+    try {
+        const id = crypto.randomUUID();
+        await turso.execute({
+            sql: `INSERT INTO Admin_Messages (id, user_id, username, email, subject, message, type, status) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, 'unread')`,
+            args: [id, userId, username, email, subject, message, type]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error sending message to admin:", error);
+        return false;
+    }
+};
+
+export const getAdminMessages = async (): Promise<any[]> => {
+    try {
+        const result = await turso.execute("SELECT * FROM Admin_Messages ORDER BY created_at DESC");
+        return result.rows.map((row: any) => ({
+            id: row.id as string,
+            userId: row.user_id as string | null,
+            username: row.username as string | null,
+            email: row.email as string | null,
+            subject: row.subject as string,
+            message: row.message as string,
+            type: row.type as string,
+            status: row.status as string,
+            createdAt: row.created_at as string
+        }));
+    } catch (error) {
+        console.error("Error fetching admin messages:", error);
+        return [];
+    }
+};
+
+export const updateMessageStatus = async (id: string, status: 'read' | 'resolved'): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "UPDATE Admin_Messages SET status = ? WHERE id = ?",
+            args: [status, id]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error updating message status:", error);
+        return false;
+    }
+};
+
+export const deleteAdminMessage = async (id: string): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "DELETE FROM Admin_Messages WHERE id = ?",
+            args: [id]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error deleting admin message:", error);
+        return false;
+    }
+};
+
 // --- Auth & User Operations ---
 
 export const loginOrRegister = async (identifier: string, inputPin: string): Promise<{ success: boolean; user?: UserProfile; error?: string; isNew?: boolean }> => {
