@@ -10,7 +10,7 @@ import { FinderView } from './components/FinderView';
 import { Register } from './components/Register';
 import { Landing } from './components/Landing';
 import { UserProfile, PetProfile } from './types';
-import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router } from 'lucide-react';
+import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router, Activity } from 'lucide-react';
 import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans } from './services/dbService';
 import { APP_VERSION } from './constants';
 
@@ -24,7 +24,7 @@ const App: React.FC = () => {
   const [finderOwner, setFinderOwner] = useState<UserProfile | undefined>(undefined);
   
   // Navigation State
-  const [currentView, setCurrentView] = useState<'home' | 'info' | 'settings' | 'lost' | 'about'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'info' | 'settings' | 'lost' | 'about' | 'scans'>('home');
   const [isRegistering, setIsRegistering] = useState(false);
   const [showLanding, setShowLanding] = useState(false);
   
@@ -163,9 +163,6 @@ const App: React.FC = () => {
 
              setUser(sessionUser);
              
-             // Check logs for owner
-             fetchScansForOwner(sessionUser.username);
-
              const pet = await getPetForUser(sessionUser.username);
              if (pet) {
                  setPetProfile(pet);
@@ -173,17 +170,23 @@ const App: React.FC = () => {
              } else {
                  setCurrentView('home');
              }
+
+             // Check logs for owner
+             fetchScansForOwner(sessionUser.username, pet);
+
              return true;
         }
         return false;
   }
 
-  const fetchScansForOwner = async (username: string) => {
+  const fetchScansForOwner = async (username: string, pet: PetProfile | null) => {
       // Only fetch logs if user is the owner
       const logs = await getRecentQrScans(username);
       if (logs && logs.length > 0) {
           setRecentScans(logs);
-          setShowScanAlert(true);
+          if (pet?.lostStatus?.isActive) {
+              setShowScanAlert(true);
+          }
       }
   };
 
@@ -247,12 +250,10 @@ const App: React.FC = () => {
         setUser(result.user);
         localStorage.setItem('matrixc_user_session', JSON.stringify(result.user));
         
-        // Check logs immediately after login
-        fetchScansForOwner(result.user.username);
-
         if (result.isNew) {
             setPetProfile(null);
             setCurrentView('home');
+            fetchScansForOwner(result.user.username, null);
         } else {
             const pet = await getPetForUser(result.user.username);
             if (pet) {
@@ -262,6 +263,7 @@ const App: React.FC = () => {
                 setPetProfile(null);
                 setCurrentView('home');
             }
+            fetchScansForOwner(result.user.username, pet);
         }
     } else {
         throw new Error(result.error || "Giriş yapılamadı");
@@ -314,7 +316,7 @@ const App: React.FC = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  const changeView = (view: 'home' | 'info' | 'settings' | 'lost' | 'about') => {
+  const changeView = (view: 'home' | 'info' | 'settings' | 'lost' | 'about' | 'scans') => {
     if (currentView === view) return;
     if (hasUnsavedChanges) {
         const confirmLeave = window.confirm("Kaydedilmemiş değişiklikleriniz var. Kaydetmeden çıkmak istediğinize emin misiniz?");
@@ -466,6 +468,9 @@ const App: React.FC = () => {
   const isLostActive = currentView === 'lost';
   const isSettingsActive = currentView === 'settings';
   const isAboutActive = currentView === 'about';
+  const isScansActive = currentView === 'scans';
+
+  const showScansTab = petProfile?.lostStatus?.isActive && recentScans.length > 0;
 
   return (
     <div className="min-h-screen font-sans flex flex-col bg-slate-100 dark:bg-matrix-950 transition-colors duration-300 relative">
@@ -548,12 +553,21 @@ const App: React.FC = () => {
                       </div>
                   </div>
 
-                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex gap-2">
+                      <button 
+                        onClick={() => {
+                            setShowScanAlert(false);
+                            changeView('scans');
+                        }}
+                        className="flex-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 py-3 rounded-xl font-bold border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                      >
+                          Tümünü Gör
+                      </button>
                       <button 
                         onClick={() => setShowScanAlert(false)}
-                        className="w-full bg-slate-900 dark:bg-slate-700 text-white py-3 rounded-xl font-bold"
+                        className="flex-1 bg-slate-900 dark:bg-slate-700 text-white py-3 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors"
                       >
-                          Anlaşıldı, Kapat
+                          Kapat
                       </button>
                   </div>
               </div>
@@ -609,17 +623,86 @@ const App: React.FC = () => {
                 onUpdateUser={handleUpdateUser}
                 currentTheme={theme}
                 onToggleTheme={toggleTheme}
+                onChangeView={changeView}
             />
         )}
 
         {currentView === 'about' && (
             <About />
         )}
+
+        {currentView === 'scans' && (
+            <div className="p-6 pb-32 max-w-lg mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-matrix-100 dark:bg-matrix-900/50 p-3 rounded-2xl">
+                        <Activity className="text-matrix-600 dark:text-matrix-400" size={28} />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Tarama Geçmişi</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-1">QR kodunuzun okutulduğu son konumlar</p>
+                    </div>
+                </div>
+
+                {recentScans.length === 0 ? (
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 text-center">
+                        <div className="bg-slate-50 dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <QrCode className="text-slate-400" size={32} />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Henüz Tarama Yok</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">QR kodunuz henüz kimse tarafından okutulmamış.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {recentScans.map((scan) => {
+                            const isIpSource = scan.location?.source === 'IP' || scan.location?.accuracy > 1000;
+                            return (
+                                <div key={scan.id} className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <span className="font-bold text-slate-800 dark:text-white text-sm">
+                                            {new Date(scan.scanned_at).toLocaleString('tr-TR')}
+                                        </span>
+                                    </div>
+                                    
+                                    {scan.location ? (
+                                        <>
+                                            {!isIpSource ? (
+                                                <a 
+                                                    href={`https://www.google.com/maps/search/?api=1&query=${scan.location.lat},${scan.location.lng}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-2 font-bold p-3 rounded-xl mb-3 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 transition-colors"
+                                                >
+                                                    <MapPin size={18} /> Kesin Konum (GPS) - Haritada Gör
+                                                </a>
+                                            ) : (
+                                                <div className="flex items-center gap-2 font-bold p-3 rounded-xl mb-3 bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+                                                    <Globe size={18} /> 
+                                                    <span>Tahmini Bölge (IP): {scan.location.city || 'Şehir Bilinmiyor'}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="flex items-center gap-2 text-slate-500 text-sm font-medium mb-3 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+                                            <AlertTriangle size={16} /> Konum bilgisi paylaşılmadı
+                                        </div>
+                                    )}
+
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <p className="flex items-center gap-2"><strong className="text-slate-700 dark:text-slate-300">Cihaz:</strong> {scan.device_info?.platform || 'Bilinmiyor'}</p>
+                                        <p className="flex items-center gap-2"><Router size={14} /><strong className="text-slate-700 dark:text-slate-300">IP:</strong> {scan.ip_address || 'Gizli'}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        )}
       </div>
 
       {/* Bottom Navigation - FIXED BOTTOM STYLE */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-matrix-950 border-t border-slate-200 dark:border-slate-800 z-50 pb-6 pt-3 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
-        <div className="grid grid-cols-5 items-center max-w-lg mx-auto">
+        <div className={`grid ${showScansTab ? 'grid-cols-6' : 'grid-cols-5'} items-center max-w-lg mx-auto`}>
             
             {!petProfile ? (
                 <button 
@@ -653,6 +736,19 @@ const App: React.FC = () => {
                 <span className={`text-[9px] font-bold ${petProfile?.lostStatus?.isActive ? "text-red-600" : ""}`}>Kayıp</span>
             </button>
             
+            {showScansTab && (
+                <button 
+                    onClick={() => changeView('scans')}
+                    className={`flex flex-col items-center gap-1 transition-all duration-200 ${isScansActive ? 'text-matrix-600 dark:text-matrix-400' : 'text-slate-400 dark:text-slate-500 hover:text-matrix-500'}`}
+                >
+                    <div className={`p-1.5 rounded-xl ${isScansActive ? 'bg-matrix-50 dark:bg-matrix-900' : ''} relative`}>
+                        <Activity size={24} strokeWidth={isScansActive ? 2.5 : 2} />
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-matrix-950"></span>
+                    </div>
+                    <span className={`text-[9px] font-bold ${isScansActive ? 'opacity-100' : 'opacity-70'}`}>Son Durum</span>
+                </button>
+            )}
+
             <button 
                 onClick={() => changeView('settings')}
                 className={`flex flex-col items-center gap-1 transition-all duration-200 ${isSettingsActive ? 'text-matrix-600 dark:text-matrix-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600'}`}

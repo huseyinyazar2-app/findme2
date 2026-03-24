@@ -10,9 +10,10 @@ interface SettingsProps {
   onUpdateUser: (user: UserProfile) => void;
   currentTheme: 'light' | 'dark';
   onToggleTheme: () => void;
+  onChangeView?: (view: any) => void;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, currentTheme, onToggleTheme }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, currentTheme, onToggleTheme, onChangeView }) => {
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -299,6 +300,23 @@ export const Settings: React.FC<SettingsProps> = ({ user, onUpdateUser, currentT
             )}
         </div>
       </section>
+      {/* 4. Scan History (Tarama Geçmişi) */}
+      {onChangeView && (
+          <section className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl shadow-slate-200/60 dark:shadow-black/20 ring-1 ring-black/5 dark:ring-white/10 space-y-4">
+            <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm flex items-center gap-2">
+                <Shield size={16} className="text-blue-500" /> Tarama Geçmişi
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Kayıp durumu kapalı olsa bile, QR kodunuzun daha önce okutulduğu konumları ve cihaz bilgilerini buradan inceleyebilirsiniz.
+            </p>
+            <button 
+                onClick={() => onChangeView('scans')}
+                className="w-full bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 py-3 rounded-xl text-sm font-bold transition-colors"
+            >
+                Tarama Geçmişini Görüntüle
+            </button>
+          </section>
+      )}
     </div>
   );
 };
