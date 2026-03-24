@@ -102,10 +102,10 @@ export const logQrScan = async (shortCode: string, locationData?: {lat: number, 
             args: [
                 id, 
                 shortCode, 
-                ipAddress, 
-                userAgent, 
-                JSON.stringify(deviceInfo), 
-                JSON.stringify(finalLocation), 
+                ipAddress ?? null, 
+                userAgent ?? null, 
+                deviceInfo ? JSON.stringify(deviceInfo) : null, 
+                finalLocation ? JSON.stringify(finalLocation) : null, 
                 locationData ? 1 : 0
             ]
         });
@@ -207,8 +207,8 @@ export const getPublicPetByQr = async (shortCode: string): Promise<PetProfile | 
         // 3. Return the profile
         return {
             id: petData.id as string,
-            ...JSON.parse(petData.pet_data as string),
-            lostStatus: JSON.parse(petData.lost_status as string),
+            ...JSON.parse((petData.pet_data as string) || '{}'),
+            lostStatus: petData.lost_status ? JSON.parse(petData.lost_status as string) : undefined,
             ownerUsername: userData.username as string
         } as PetProfile;
     } catch (e) {
@@ -417,8 +417,8 @@ export const getPetForUser = async (username: string): Promise<PetProfile | null
             const pet = petRes.rows[0];
             return {
                 id: pet.id as string,
-                ...JSON.parse(pet.pet_data as string),
-                lostStatus: JSON.parse(pet.lost_status as string)
+                ...JSON.parse((pet.pet_data as string) || '{}'),
+                lostStatus: pet.lost_status ? JSON.parse(pet.lost_status as string) : undefined
             } as PetProfile;
         }
         return null;
@@ -461,7 +461,7 @@ export const savePetForUser = async (user: UserProfile, pet: PetProfile) => {
             vetInfo: pet.vetInfo
         });
         
-        const lostStatusJson = JSON.stringify(pet.lostStatus);
+        const lostStatusJson = pet.lostStatus ? JSON.stringify(pet.lostStatus) : null;
 
         const existingPetRes = await turso.execute({
             sql: `SELECT id FROM Find_Pets WHERE owner_id = ?`,
@@ -506,34 +506,34 @@ function createTempProfile(username: string, pin: string): UserProfile {
 
 function mapDbUserToProfile(dbUser: any): UserProfile {
     return {
-        username: dbUser.username,
-        password: dbUser.password, 
-        fullName: dbUser.full_name,
-        email: dbUser.email,
-        phone: dbUser.phone,
-        isEmailVerified: dbUser.is_email_verified || false,
-        contactPreference: dbUser.contact_preference as any,
-        emergencyContactName: dbUser.emergency_contact_name,
-        emergencyContactEmail: dbUser.emergency_contact_email,
-        emergencyContactPhone: dbUser.emergency_contact_phone,
-        city: dbUser.city,
-        district: dbUser.district
+        username: dbUser.username || '',
+        password: dbUser.password || '', 
+        fullName: dbUser.full_name || '',
+        email: dbUser.email || '',
+        phone: dbUser.phone || '',
+        isEmailVerified: dbUser.is_email_verified === 1,
+        contactPreference: dbUser.contact_preference || 'Telefon',
+        emergencyContactName: dbUser.emergency_contact_name || '',
+        emergencyContactEmail: dbUser.emergency_contact_email || '',
+        emergencyContactPhone: dbUser.emergency_contact_phone || '',
+        city: dbUser.city || '',
+        district: dbUser.district || ''
     };
 }
 
 function mapProfileToDbUser(profile: UserProfile): any {
     return {
-        username: profile.username,
-        password: profile.password,
-        full_name: profile.fullName,
-        email: profile.email,
-        phone: profile.phone,
-        is_email_verified: profile.isEmailVerified,
-        contact_preference: profile.contactPreference,
-        emergency_contact_name: profile.emergencyContactName,
-        emergency_contact_email: profile.emergencyContactEmail,
-        emergency_contact_phone: profile.emergencyContactPhone,
-        city: profile.city,
-        district: profile.district
+        username: profile.username ?? null,
+        password: profile.password ?? null,
+        full_name: profile.fullName ?? null,
+        email: profile.email ?? null,
+        phone: profile.phone ?? null,
+        is_email_verified: profile.isEmailVerified ?? false,
+        contact_preference: profile.contactPreference ?? null,
+        emergency_contact_name: profile.emergencyContactName ?? null,
+        emergency_contact_email: profile.emergencyContactEmail ?? null,
+        emergency_contact_phone: profile.emergencyContactPhone ?? null,
+        city: profile.city ?? null,
+        district: profile.district ?? null
     };
 }

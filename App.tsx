@@ -104,15 +104,15 @@ const App: React.FC = () => {
                 
                 if (ownerData) {
                     setFinderOwner({
-                        username: ownerData.username,
-                        email: ownerData.email,
-                        phone: ownerData.phone,
-                        fullName: ownerData.full_name,
-                        contactPreference: ownerData.contact_preference,
-                        emergencyContactName: ownerData.emergency_contact_name,
-                        emergencyContactEmail: ownerData.emergency_contact_email,
-                        emergencyContactPhone: ownerData.emergency_contact_phone,
-                        isEmailVerified: false 
+                        username: ownerData.username || '',
+                        email: ownerData.email || '',
+                        phone: ownerData.phone || '',
+                        fullName: ownerData.full_name || '',
+                        contactPreference: ownerData.contact_preference || 'Telefon',
+                        emergencyContactName: ownerData.emergency_contact_name || '',
+                        emergencyContactEmail: ownerData.emergency_contact_email || '',
+                        emergencyContactPhone: ownerData.emergency_contact_phone || '',
+                        isEmailVerified: ownerData.is_email_verified === 1 
                     } as UserProfile);
                 }
 
