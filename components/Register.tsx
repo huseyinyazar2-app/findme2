@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Loader2, ArrowLeft, Download, CheckCircle2 } from 'lucide-react';
 import { Input } from './ui/Input';
-import { supabase } from '../services/dbService';
+import { turso } from '../services/turso';
 import { QRCodeSVG } from 'qrcode.react';
 
-import { formatPhoneNumber } from '../constants';
+import { formatPhoneNumber, generateUUID } from '../constants';
 
 interface RegisterProps {
   onBackToLogin: () => void;
@@ -56,13 +56,12 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
 
     try {
       // 1. Check if email already exists
-      const { data: existingUser } = await supabase
-        .from('Find_Users')
-        .select('id')
-        .eq('email', email)
-        .single();
+      const existingUserRes = await turso.execute({
+        sql: `SELECT id FROM Find_Users WHERE email = ?`,
+        args: [email]
+      });
 
-      if (existingUser) {
+      if (existingUserRes.rows.length > 0) {
         throw new Error('Bu e-posta adresi ile zaten kayıtlı bir kullanıcı var.');
       }
 
@@ -71,12 +70,11 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
       let isUnique = false;
       while (!isUnique) {
         shortCode = 'S' + generateRandomString(6);
-        const { data: existingCode } = await supabase
-          .from('QR_Kod')
-          .select('short_code')
-          .eq('short_code', shortCode)
-          .single();
-        if (!existingCode) {
+        const existingCodeRes = await turso.execute({
+          sql: `SELECT short_code FROM QR_Kod WHERE short_code = ?`,
+          args: [shortCode]
+        });
+        if (existingCodeRes.rows.length === 0) {
           isUnique = true;
         }
       }
@@ -85,41 +83,40 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
       const pin = generateRandomPin();
 
       // 4. Create QR_Kod entry
-      const { error: qrError } = await supabase
-        .from('QR_Kod')
-        .insert([{ 
-            short_code: shortCode, 
-            pin: pin, 
-            status: 'dolu',
-            full_url: `https://findme.mom/pet/${shortCode}`
-        }]);
-
-      if (qrError) {
+      try {
+        await turso.execute({
+            sql: `INSERT INTO QR_Kod (short_code, pin, status, full_url) VALUES (?, ?, ?, ?)`,
+            args: [shortCode, pin, 'dolu', `https://findme.mom/pet/${shortCode}`]
+        });
+      } catch (qrError: any) {
           console.error("QR Insert Error:", qrError);
           throw new Error(`QR Kod oluşturulurken bir hata oluştu: ${qrError.message}`);
       }
 
       // 5. Create Find_Users entry
-      const userPayload = {
-        username: shortCode,
-        password: pin,
-        full_name: `${firstName} ${lastName}`.trim(),
-        email: email,
-        phone: phone,
-        qr_code: shortCode,
-        is_email_verified: false,
-        contact_preference: 'Telefon',
-        created_at: new Date().toISOString()
-      };
-
-      const { error: userError } = await supabase
-        .from('Find_Users')
-        .insert([userPayload]);
-
-      if (userError) {
+      try {
+        await turso.execute({
+            sql: `INSERT INTO Find_Users (id, username, qr_code, password, full_name, email, phone, is_email_verified, contact_preference, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+                generateUUID(),
+                shortCode,
+                shortCode,
+                pin,
+                `${firstName} ${lastName}`.trim(),
+                email,
+                phone,
+                0,
+                'Telefon',
+                new Date().toISOString()
+            ]
+        });
+      } catch (userError: any) {
         console.error("User Insert Error:", userError);
         // Rollback QR_Kod if user creation fails
-        await supabase.from('QR_Kod').delete().eq('short_code', shortCode);
+        await turso.execute({
+            sql: `DELETE FROM QR_Kod WHERE short_code = ?`,
+            args: [shortCode]
+        });
         throw new Error(`Kullanıcı oluşturulurken bir hata oluştu: ${userError.message}`);
       }
 
@@ -279,7 +276,7 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
                     type="email"
                     placeholder="ornek@email.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setEmail(e.target.value.toLowerCase())}
                     required
                 />
                 <Input

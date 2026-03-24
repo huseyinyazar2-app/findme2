@@ -1,10 +1,11 @@
 
 
-import { supabase } from './supabase';
+import { turso } from './turso';
 import { UserProfile, PetProfile } from '../types';
+import { generateUUID } from '../constants';
 
-// Re-export supabase for direct use if needed (e.g. in App.tsx)
-export { supabase };
+// Export turso for direct use if needed
+export { turso as supabase }; // Kept alias for compatibility if used elsewhere
 
 // --- LOGGING OPERATION ---
 
@@ -94,19 +95,27 @@ export const logQrScan = async (shortCode: string, locationData?: {lat: number, 
             consent_given: !!locationData // Sadece GPS verildiyse rıza var sayılır
         };
 
-        // 5. SUPABASE INSERT
-        const { data, error } = await supabase
-            .from('QR_Logs') 
-            .insert([logPayload])
-            .select('id')
-            .single();
+        // 5. TURSO INSERT
+        const id = generateUUID();
+        const { rowsAffected } = await turso.execute({
+            sql: `INSERT INTO QR_Logs (id, qr_code, ip_address, user_agent, device_info, location, consent_given) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+                id, 
+                shortCode, 
+                ipAddress, 
+                userAgent, 
+                JSON.stringify(deviceInfo), 
+                JSON.stringify(finalLocation), 
+                locationData ? 1 : 0
+            ]
+        });
 
-        if (error) {
-            console.error("❌ Log kaydetme hatası (Supabase):", error);
+        if (rowsAffected === 0) {
+            console.error("❌ Log kaydetme hatası (Turso)");
             return null;
         } else {
-            console.log("✅ QR Logu başarıyla kaydedildi. ID:", data.id);
-            return data.id;
+            console.log("✅ QR Logu başarıyla kaydedildi. ID:", id);
+            return id;
         }
 
     } catch (err: any) {
@@ -122,18 +131,17 @@ export const logQrScan = async (shortCode: string, locationData?: {lat: number, 
 export const getRecentQrScans = async (qrCode: string) => {
     try {
         // Son 10 taramayı getir, en yeni en üstte
-        const { data, error } = await supabase
-            .from('QR_Logs')
-            .select('*')
-            .eq('qr_code', qrCode)
-            .order('scanned_at', { ascending: false })
-            .limit(10);
+        const res = await turso.execute({
+            sql: `SELECT * FROM QR_Logs WHERE qr_code = ? ORDER BY scanned_at DESC LIMIT 10`,
+            args: [qrCode]
+        });
 
-        if (error) {
-            console.error("Log çekme hatası:", error);
-            return [];
-        }
-        return data || [];
+        return res.rows.map(row => ({
+            ...row,
+            device_info: JSON.parse((row.device_info as string) || '{}'),
+            location: JSON.parse((row.location as string) || 'null'),
+            consent_given: row.consent_given === 1
+        }));
     } catch (e) {
         console.error("getRecentQrScans hatası:", e);
         return [];
@@ -144,22 +152,28 @@ export const getRecentQrScans = async (qrCode: string) => {
 
 export const checkQRCode = async (shortCode: string) => {
     // TABLO ADI: QR_Kod
-    const { data: qrData, error: qrError } = await supabase
-        .from('QR_Kod')
-        .select('short_code, pin, status') 
-        .eq('short_code', shortCode)
-        .single();
+    try {
+        const res = await turso.execute({
+            sql: `SELECT short_code, pin, status FROM QR_Kod WHERE short_code = ?`,
+            args: [shortCode]
+        });
 
-    if (qrError || !qrData) {
-        return { valid: false, message: 'Geçersiz QR Kod' };
+        if (res.rows.length === 0) {
+            return { valid: false, message: 'Geçersiz QR Kod' };
+        }
+
+        const qrData = res.rows[0];
+
+        return { 
+            valid: true, 
+            status: qrData.status as string, // 'boş' veya 'dolu'
+            shortCode: qrData.short_code as string,
+            pin: qrData.pin as string
+        };
+    } catch (e) {
+        console.error("checkQRCode error:", e);
+        return { valid: false, message: 'Veritabanı hatası' };
     }
-
-    return { 
-        valid: true, 
-        status: qrData.status, // 'boş' veya 'dolu'
-        shortCode: qrData.short_code,
-        pin: qrData.pin 
-    };
 };
 
 /**
@@ -167,63 +181,84 @@ export const checkQRCode = async (shortCode: string) => {
  * Used for the "Finder View" when a pet is lost.
  */
 export const getPublicPetByQr = async (shortCode: string): Promise<PetProfile | null> => {
-    // 1. Find the user associated with this QR code
-    const { data: userData, error: userError } = await supabase
-        .from('Find_Users')
-        .select('id, username')
-        .eq('qr_code', shortCode) 
-        .single();
+    try {
+        // 1. Find the user associated with this QR code
+        const userRes = await turso.execute({
+            sql: `SELECT id, username FROM Find_Users WHERE qr_code = ?`,
+            args: [shortCode]
+        });
 
-    if (userError || !userData) {
+        if (userRes.rows.length === 0) {
+            return null;
+        }
+        const userData = userRes.rows[0];
+
+        // 2. Get the pet associated with this user
+        const petRes = await turso.execute({
+            sql: `SELECT * FROM Find_Pets WHERE owner_id = ?`,
+            args: [userData.id]
+        });
+
+        if (petRes.rows.length === 0) {
+            return null;
+        }
+        const petData = petRes.rows[0];
+
+        // 3. Return the profile
+        return {
+            id: petData.id as string,
+            ...JSON.parse(petData.pet_data as string),
+            lostStatus: JSON.parse(petData.lost_status as string),
+            ownerUsername: userData.username as string
+        } as PetProfile;
+    } catch (e) {
+        console.error("getPublicPetByQr error:", e);
         return null;
     }
-
-    // 2. Get the pet associated with this user
-    const { data: petData, error: petError } = await supabase
-        .from('Find_Pets')
-        .select('*')
-        .eq('owner_id', userData.id)
-        .single();
-
-    if (petError || !petData) {
-        return null;
-    }
-
-    // 3. Return the profile
-    return {
-        id: petData.id,
-        ...petData.pet_data,
-        lostStatus: petData.lost_status,
-        ownerUsername: userData.username 
-    } as PetProfile;
 };
 
 // --- Storage Operations ---
 
 export const uploadPetPhoto = async (file: File): Promise<string | null> => {
-    try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-        const filePath = `${fileName}`;
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const MAX_DIMENSION = 800; // Akıllı sıkıştırma boyutu
 
-        const { error: uploadError } = await supabase.storage
-            .from('pet_photos')
-            .upload(filePath, file);
+                if (width > height && width > MAX_DIMENSION) {
+                    height *= MAX_DIMENSION / width;
+                    width = MAX_DIMENSION;
+                } else if (height > MAX_DIMENSION) {
+                    width *= MAX_DIMENSION / height;
+                    height = MAX_DIMENSION;
+                }
 
-        if (uploadError) {
-            console.error("Upload Error:", uploadError);
-            return null;
-        }
-
-        const { data } = supabase.storage
-            .from('pet_photos')
-            .getPublicUrl(filePath);
-
-        return data.publicUrl;
-    } catch (e) {
-        console.error("Unexpected upload error:", e);
-        return null;
-    }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+                
+                // Compress to JPEG with 0.7 quality and convert to base64
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                resolve(dataUrl);
+            };
+            img.onerror = () => {
+                console.error("Resim yüklenirken hata oluştu");
+                resolve(null);
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.onerror = () => {
+            console.error("Dosya okunurken hata oluştu");
+            resolve(null);
+        };
+        reader.readAsDataURL(file);
+    });
 };
 
 // --- Auth & User Operations ---
@@ -234,16 +269,16 @@ export const loginOrRegister = async (identifier: string, inputPin: string): Pro
 
         if (isEmail) {
             // E-posta ile giriş
-            const { data: existingUser, error: userError } = await supabase
-                .from('Find_Users')
-                .select('*')
-                .eq('email', identifier)
-                .single();
+            const userRes = await turso.execute({
+                sql: `SELECT * FROM Find_Users WHERE email = ?`,
+                args: [identifier]
+            });
 
-            if (userError || !existingUser) {
+            if (userRes.rows.length === 0) {
                 return { success: false, error: 'E-posta adresi bulunamadı.' };
             }
 
+            const existingUser = userRes.rows[0];
             const dbPassword = String(existingUser.password).trim();
             const userPin = String(inputPin).trim();
 
@@ -257,16 +292,16 @@ export const loginOrRegister = async (identifier: string, inputPin: string): Pro
             // QR Kod ile giriş
             const shortCode = identifier;
             // 1. ADIM: QR_Kod tablosundan PIN ve STATUS doğrula
-            const { data: qrData, error: qrError } = await supabase
-                .from('QR_Kod')
-                .select('*')
-                .eq('short_code', shortCode)
-                .single();
+            const qrRes = await turso.execute({
+                sql: `SELECT * FROM QR_Kod WHERE short_code = ?`,
+                args: [shortCode]
+            });
 
-            if (qrError || !qrData) {
+            if (qrRes.rows.length === 0) {
                 return { success: false, error: 'Geçersiz QR Kod' };
             }
 
+            const qrData = qrRes.rows[0];
             const dbPin = String(qrData.pin).trim();
             const userPin = String(inputPin).trim();
 
@@ -280,13 +315,13 @@ export const loginOrRegister = async (identifier: string, inputPin: string): Pro
                 return { success: true, user: tempUser, isNew: true };
             
             } else {
-                const { data: existingUser } = await supabase
-                    .from('Find_Users')
-                    .select('*')
-                    .eq('qr_code', shortCode) 
-                    .single();
+                const userRes = await turso.execute({
+                    sql: `SELECT * FROM Find_Users WHERE qr_code = ?`,
+                    args: [shortCode]
+                });
 
-                if (existingUser) {
+                if (userRes.rows.length > 0) {
+                    const existingUser = userRes.rows[0];
                     const profile = mapDbUserToProfile(existingUser);
                     if (!profile.password || profile.password.trim() === '') {
                         profile.password = dbPin;
@@ -294,7 +329,10 @@ export const loginOrRegister = async (identifier: string, inputPin: string): Pro
                     return { success: true, user: profile, isNew: false };
                 } else {
                     // Hatalı durum düzeltme
-                    await supabase.from('QR_Kod').update({ status: 'boş' }).eq('short_code', shortCode);
+                    await turso.execute({
+                        sql: `UPDATE QR_Kod SET status = 'boş' WHERE short_code = ?`,
+                        args: [shortCode]
+                    });
                     const tempUser = createTempProfile(shortCode, userPin);
                     return { success: true, user: tempUser, isNew: true };
                 }
@@ -310,14 +348,23 @@ export const registerUserAfterForm = async (userProfile: UserProfile, shortCode:
     try {
         const dbUser = mapProfileToDbUser(userProfile);
         dbUser.qr_code = shortCode; 
-        dbUser.created_at = new Date().toISOString();
+        dbUser.id = generateUUID();
 
-        const { error: createError } = await supabase.from('Find_Users').insert([dbUser]);
-        if (createError) return false;
+        await turso.execute({
+            sql: `INSERT INTO Find_Users (id, username, qr_code, password, full_name, email, phone, is_email_verified, contact_preference, emergency_contact_name, emergency_contact_email, emergency_contact_phone, city, district) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            args: [
+                dbUser.id, dbUser.username, dbUser.qr_code, dbUser.password, dbUser.full_name, dbUser.email, dbUser.phone,
+                dbUser.is_email_verified ? 1 : 0, dbUser.contact_preference, dbUser.emergency_contact_name, dbUser.emergency_contact_email, dbUser.emergency_contact_phone, dbUser.city, dbUser.district
+            ]
+        });
 
-        await supabase.from('QR_Kod').update({ status: 'dolu' }).eq('short_code', shortCode);
+        await turso.execute({
+            sql: `UPDATE QR_Kod SET status = 'dolu' WHERE short_code = ?`,
+            args: [shortCode]
+        });
         return true;
     } catch (e) {
+        console.error("registerUserAfterForm error", e);
         return false;
     }
 }
@@ -325,18 +372,27 @@ export const registerUserAfterForm = async (userProfile: UserProfile, shortCode:
 export const updateUserProfile = async (user: UserProfile) => {
     try {
         const dbData = mapProfileToDbUser(user);
-        delete (dbData as any).id;
-        delete (dbData as any).created_at;
-        delete (dbData as any).qr_code;
 
-        const { error } = await supabase.from('Find_Users').update(dbData).eq('username', user.username);
-        if (error) return false;
+        await turso.execute({
+            sql: `UPDATE Find_Users SET full_name = ?, email = ?, phone = ?, contact_preference = ?, emergency_contact_name = ?, emergency_contact_email = ?, emergency_contact_phone = ?, city = ?, district = ? WHERE username = ?`,
+            args: [
+                dbData.full_name, dbData.email, dbData.phone, dbData.contact_preference, dbData.emergency_contact_name, dbData.emergency_contact_email, dbData.emergency_contact_phone, dbData.city, dbData.district, dbData.username
+            ]
+        });
 
         if (user.password) {
-            await supabase.from('QR_Kod').update({ pin: user.password }).eq('short_code', user.username);
+            await turso.execute({
+                sql: `UPDATE QR_Kod SET pin = ? WHERE short_code = ?`,
+                args: [user.password, user.username]
+            });
+            await turso.execute({
+                sql: `UPDATE Find_Users SET password = ? WHERE username = ?`,
+                args: [user.password, user.username]
+            });
         }
         return true;
     } catch (e) {
+        console.error("updateUserProfile error", e);
         return false;
     }
 };
@@ -344,62 +400,93 @@ export const updateUserProfile = async (user: UserProfile) => {
 // --- Pet Operations ---
 
 export const getPetForUser = async (username: string): Promise<PetProfile | null> => {
-    const { data: user } = await supabase.from('Find_Users').select('id').eq('username', username).single();
-    if (!user) return null;
+    try {
+        const userRes = await turso.execute({
+            sql: `SELECT id FROM Find_Users WHERE username = ?`,
+            args: [username]
+        });
+        if (userRes.rows.length === 0) return null;
+        const user = userRes.rows[0];
 
-    const { data: pet } = await supabase
-        .from('Find_Pets')
-        .select('*')
-        .eq('owner_id', user.id)
-        .single();
+        const petRes = await turso.execute({
+            sql: `SELECT * FROM Find_Pets WHERE owner_id = ?`,
+            args: [user.id]
+        });
 
-    if (pet) {
-        return {
-            id: pet.id,
-            ...pet.pet_data,
-            lostStatus: pet.lost_status
-        } as PetProfile;
+        if (petRes.rows.length > 0) {
+            const pet = petRes.rows[0];
+            return {
+                id: pet.id as string,
+                ...JSON.parse(pet.pet_data as string),
+                lostStatus: JSON.parse(pet.lost_status as string)
+            } as PetProfile;
+        }
+        return null;
+    } catch (e) {
+        console.error("getPetForUser error", e);
+        return null;
     }
-    return null;
 };
 
 export const savePetForUser = async (user: UserProfile, pet: PetProfile) => {
-     const { data: dbUser } = await supabase.from('Find_Users').select('id').eq('username', user.username).single();
-     let ownerId = dbUser?.id;
+    try {
+        const userRes = await turso.execute({
+            sql: `SELECT id FROM Find_Users WHERE username = ?`,
+            args: [user.username]
+        });
+        
+        let ownerId = userRes.rows.length > 0 ? userRes.rows[0].id : null;
 
-     if (!ownerId) {
-         const success = await registerUserAfterForm(user, user.username);
-         if (!success) return false;
-         const { data: newUser } = await supabase.from('Find_Users').select('id').eq('username', user.username).single();
-         if (!newUser) return false;
-         ownerId = newUser.id;
-     }
+        if (!ownerId) {
+            const success = await registerUserAfterForm(user, user.username);
+            if (!success) return false;
+            
+            const newUserRes = await turso.execute({
+                sql: `SELECT id FROM Find_Users WHERE username = ?`,
+                args: [user.username]
+            });
+            if (newUserRes.rows.length === 0) return false;
+            ownerId = newUserRes.rows[0].id;
+        }
 
-     const petPayload = {
-         pet_data: {
-             name: pet.name,
-             type: pet.type,
-             photoUrl: pet.photoUrl,
-             features: pet.features,
-             sizeInfo: pet.sizeInfo,
-             temperament: pet.temperament,
-             healthWarning: pet.healthWarning,
-             microchip: pet.microchip,
-             vetInfo: pet.vetInfo
-         },
-         lost_status: pet.lostStatus,
-         owner_id: ownerId
-     };
+        const petDataJson = JSON.stringify({
+            name: pet.name,
+            type: pet.type,
+            photoUrl: pet.photoUrl,
+            features: pet.features,
+            sizeInfo: pet.sizeInfo,
+            temperament: pet.temperament,
+            healthWarning: pet.healthWarning,
+            microchip: pet.microchip,
+            vetInfo: pet.vetInfo
+        });
+        
+        const lostStatusJson = JSON.stringify(pet.lostStatus);
 
-     const { data: existingPet } = await supabase.from('Find_Pets').select('id').eq('owner_id', ownerId).single();
+        const existingPetRes = await turso.execute({
+            sql: `SELECT id FROM Find_Pets WHERE owner_id = ?`,
+            args: [ownerId]
+        });
 
-     if (existingPet) {
-         const { error } = await supabase.from('Find_Pets').update(petPayload).eq('id', existingPet.id);
-         return !error;
-     } else {
-         const { error } = await supabase.from('Find_Pets').insert([petPayload]);
-         return !error;
-     }
+        if (existingPetRes.rows.length > 0) {
+            const existingPetId = existingPetRes.rows[0].id;
+            await turso.execute({
+                sql: `UPDATE Find_Pets SET pet_data = ?, lost_status = ? WHERE id = ?`,
+                args: [petDataJson, lostStatusJson, existingPetId]
+            });
+            return true;
+        } else {
+            const newPetId = generateUUID();
+            await turso.execute({
+                sql: `INSERT INTO Find_Pets (id, owner_id, pet_data, lost_status) VALUES (?, ?, ?, ?)`,
+                args: [newPetId, ownerId, petDataJson, lostStatusJson]
+            });
+            return true;
+        }
+    } catch (e) {
+        console.error("savePetForUser error", e);
+        return false;
+    }
 };
 
 

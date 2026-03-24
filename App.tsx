@@ -11,7 +11,7 @@ import { Register } from './components/Register';
 import { Landing } from './components/Landing';
 import { UserProfile, PetProfile } from './types';
 import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router } from 'lucide-react';
-import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase, logQrScan, getRecentQrScans } from './services/dbService';
+import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans } from './services/dbService';
 import { APP_VERSION } from './constants';
 
 const App: React.FC = () => {
@@ -96,11 +96,11 @@ const App: React.FC = () => {
                 setFinderPet(petCheck);
                 
                 // Fetch Owner Data silently in background
-                const { data: ownerData } = await supabase
-                    .from('Find_Users')
-                    .select('*')
-                    .eq('username', code)
-                    .single();
+                const ownerDataRes = await turso.execute({
+                    sql: `SELECT * FROM Find_Users WHERE username = ? LIMIT 1`,
+                    args: [code]
+                });
+                const ownerData = ownerDataRes.rows[0];
                 
                 if (ownerData) {
                     setFinderOwner({

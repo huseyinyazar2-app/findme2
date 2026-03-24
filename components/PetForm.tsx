@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile, PetProfile, PetType } from '../types';
-import { TURKEY_CITIES, CITY_NAMES, TEMPERAMENT_OPTIONS, formatPhoneNumber } from '../constants';
+import { TURKEY_CITIES, CITY_NAMES, TEMPERAMENT_OPTIONS, formatPhoneNumber, generateUUID } from '../constants';
 import { Input } from './ui/Input';
 import { PrivacyToggle } from './ui/Toggle';
 import { 
@@ -20,7 +20,7 @@ export const PetForm: React.FC<PetFormProps> = ({ user, onUpdateUser, initialPet
   const isEditMode = !!initialPetData;
 
   const [petData, setPetData] = useState<PetProfile>({
-    id: crypto.randomUUID(),
+    id: generateUUID(),
     name: { value: '', isPublic: true },
     type: PetType.DOG,
     photoUrl: { value: null, isPublic: true },

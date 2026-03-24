@@ -136,3 +136,17 @@ export const formatPhoneNumber = (value: string): string => {
   // 10-11 chars: 0555 555 55 55
   return `${processed.slice(0, 4)} ${processed.slice(4, 7)} ${processed.slice(7, 9)} ${processed.slice(9)}`;
 };
+
+/**
+ * Generates a random UUID v4
+ */
+export const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers or non-secure contexts
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
