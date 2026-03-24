@@ -11,14 +11,18 @@ import { Register } from './components/Register';
 import { Landing } from './components/Landing';
 import { Admin } from './components/Admin';
 import { UserProfile, PetProfile } from './types';
-import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router, Activity } from 'lucide-react';
-import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans, loginAdmin } from './services/dbService';
+import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router, Activity, MessageSquare } from 'lucide-react';
+import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans, loginAdmin, initDb, getUserNotifications, markNotificationRead, getUserMessages } from './services/dbService';
 import { APP_VERSION } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [petProfile, setPetProfile] = useState<PetProfile | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [userMessages, setUserMessages] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationTab, setNotificationTab] = useState<'notifications' | 'messages'>('notifications');
   
   // Finder Mode State
   const [isFinderMode, setIsFinderMode] = useState(false);
@@ -57,6 +61,25 @@ const App: React.FC = () => {
     }
     return 'light';
   });
+
+  useEffect(() => {
+    initDb();
+  }, []);
+
+  useEffect(() => {
+    if (user && !isAdmin) {
+      const fetchNotifications = async () => {
+        const notifs = await getUserNotifications(user.username);
+        setNotifications(notifs);
+        const msgs = await getUserMessages(user.username);
+        setUserMessages(msgs);
+      };
+      fetchNotifications();
+      // Poll every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -501,6 +524,31 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen font-sans flex flex-col bg-slate-100 dark:bg-matrix-950 transition-colors duration-300 relative">
       
+      {/* --- TOP HEADER --- */}
+      {user && !isAdmin && (
+          <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-4 py-3 flex justify-between items-center shadow-sm">
+              <div className="flex items-center gap-2">
+                  <div className="bg-matrix-100 dark:bg-matrix-900/50 p-1.5 rounded-lg">
+                      <ShieldCheck className="text-matrix-600 dark:text-matrix-400" size={20} />
+                  </div>
+                  <span className="font-black text-slate-800 dark:text-white tracking-tight">MatrixC</span>
+              </div>
+              
+              <button 
+                  onClick={() => setShowNotifications(true)}
+                  className="relative p-2 text-slate-600 hover:text-matrix-600 dark:text-slate-400 dark:hover:text-matrix-400 transition-colors rounded-full hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                  <MessageSquare size={24} className={notifications.filter(n => !n.isRead).length > 0 ? "animate-pulse text-matrix-500" : ""} />
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                      <span className="absolute top-1 right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                      </span>
+                  )}
+              </button>
+          </header>
+      )}
+
       {/* --- OWNER SCAN ALERT MODAL --- */}
       {showScanAlert && recentScans.length > 0 && (
           <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
@@ -614,6 +662,123 @@ const App: React.FC = () => {
           </div>
       )}
 
+      {/* --- NOTIFICATIONS MODAL --- */}
+      {showNotifications && (
+          <div className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+              <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 flex flex-col max-h-[80vh]">
+                  <div className="bg-matrix-600 p-4 text-white flex justify-between items-center shrink-0">
+                      <div className="flex items-center gap-2">
+                          <MessageSquare />
+                          <h3 className="font-black text-lg">Mesajlar & Bildirimler</h3>
+                      </div>
+                      <button onClick={() => setShowNotifications(false)} className="bg-white/20 p-1 rounded-full hover:bg-white/30">
+                          <XCircle />
+                      </button>
+                  </div>
+                  
+                  <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                      <button 
+                          onClick={() => setNotificationTab('notifications')}
+                          className={`flex-1 py-3 text-sm font-bold transition-colors ${notificationTab === 'notifications' ? 'text-matrix-600 dark:text-matrix-400 border-b-2 border-matrix-600 dark:border-matrix-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                      >
+                          Bildirimler
+                          {notifications.filter(n => !n.isRead).length > 0 && (
+                              <span className="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                                  {notifications.filter(n => !n.isRead).length}
+                              </span>
+                          )}
+                      </button>
+                      <button 
+                          onClick={() => setNotificationTab('messages')}
+                          className={`flex-1 py-3 text-sm font-bold transition-colors ${notificationTab === 'messages' ? 'text-matrix-600 dark:text-matrix-400 border-b-2 border-matrix-600 dark:border-matrix-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                      >
+                          Mesajlarım
+                      </button>
+                  </div>
+
+                  <div className="p-4 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-950">
+                      {notificationTab === 'notifications' ? (
+                          notifications.length === 0 ? (
+                              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                                  <Bell size={48} className="mx-auto mb-4 opacity-20" />
+                                  <p>Henüz bildiriminiz yok.</p>
+                              </div>
+                          ) : (
+                              <div className="space-y-3">
+                                  {notifications.map(notif => (
+                                      <div 
+                                          key={notif.id} 
+                                          onClick={() => {
+                                              if (!notif.isRead) {
+                                                  markNotificationRead(notif.id);
+                                                  setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n));
+                                              }
+                                          }}
+                                          className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                                              notif.isRead 
+                                                  ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-70' 
+                                                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm'
+                                          }`}
+                                      >
+                                          <div className="flex justify-between items-start mb-2">
+                                              <h4 className={`font-bold ${notif.isRead ? 'text-slate-700 dark:text-slate-300' : 'text-blue-800 dark:text-blue-300'}`}>
+                                                  {notif.title}
+                                              </h4>
+                                              {!notif.isRead && <span className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></span>}
+                                          </div>
+                                          <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                                              {notif.message}
+                                          </p>
+                                          <div className="mt-3 text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                              {new Date(notif.createdAt).toLocaleString('tr-TR')}
+                                          </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          )
+                      ) : (
+                          userMessages.length === 0 ? (
+                              <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                                  <MessageSquare size={48} className="mx-auto mb-4 opacity-20" />
+                                  <p>Henüz gönderdiğiniz bir mesaj yok.</p>
+                              </div>
+                          ) : (
+                              <div className="space-y-4">
+                                  {userMessages.map(msg => (
+                                      <div key={msg.id} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                                          <div className="flex justify-between items-start mb-2">
+                                              <h4 className="font-bold text-slate-800 dark:text-white">{msg.subject}</h4>
+                                              <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                                                  msg.status === 'resolved' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 
+                                                  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                              }`}>
+                                                  {msg.status === 'resolved' ? 'Yanıtlandı' : 'Bekliyor'}
+                                              </span>
+                                          </div>
+                                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 whitespace-pre-wrap">
+                                              {msg.message}
+                                          </p>
+                                          
+                                          {msg.reply && (
+                                              <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800/50">
+                                                  <p className="text-xs font-bold text-blue-800 dark:text-blue-300 mb-1 flex items-center gap-1"><ShieldCheck size={12}/> Admin Yanıtı:</p>
+                                                  <p className="text-sm text-blue-900 dark:text-blue-100 whitespace-pre-wrap">{msg.reply}</p>
+                                              </div>
+                                          )}
+                                          
+                                          <div className="mt-3 text-[10px] text-slate-400 font-medium uppercase tracking-wider">
+                                              {new Date(msg.createdAt).toLocaleString('tr-TR')}
+                                          </div>
+                                      </div>
+                                  ))}
+                              </div>
+                          )
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
+
       {/* Content Area */}
       <div className="flex-1">
         {currentView === 'home' && !petProfile && (
@@ -654,7 +819,7 @@ const App: React.FC = () => {
         )}
 
         {currentView === 'about' && (
-            <About />
+            <About user={user} />
         )}
 
         {currentView === 'scans' && (

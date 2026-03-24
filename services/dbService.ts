@@ -261,15 +261,99 @@ export const uploadPetPhoto = async (file: File): Promise<string | null> => {
     });
 };
 
+async function hashPassword(password: string): Promise<string> {
+    const msgUint8 = new TextEncoder().encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+export const initDb = async () => {
+    try {
+        // Notifications table
+        await turso.execute(`
+            CREATE TABLE IF NOT EXISTS Notifications (
+                id TEXT PRIMARY KEY,
+                username TEXT NOT NULL,
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                type TEXT NOT NULL,
+                is_read BOOLEAN DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Admin_Messages table
+        await turso.execute(`
+            CREATE TABLE IF NOT EXISTS Admin_Messages (
+                id TEXT PRIMARY KEY,
+                user_id TEXT,
+                username TEXT,
+                email TEXT,
+                subject TEXT NOT NULL,
+                message TEXT NOT NULL,
+                type TEXT NOT NULL,
+                status TEXT DEFAULT 'unread',
+                reply TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Admin_Users table
+        await turso.execute(`
+            CREATE TABLE IF NOT EXISTS Admin_Users (
+                username TEXT PRIMARY KEY,
+                password TEXT NOT NULL
+            )
+        `);
+
+        // Insert default admin if not exists
+        const adminRes = await turso.execute("SELECT * FROM Admin_Users WHERE username = 'admin'");
+        if (adminRes.rows.length === 0) {
+            const hashedDefault = await hashPassword('admin123');
+            await turso.execute({
+                sql: "INSERT INTO Admin_Users (username, password) VALUES ('admin', ?)",
+                args: [hashedDefault]
+            });
+        }
+        
+        try {
+            await turso.execute(`ALTER TABLE Admin_Messages ADD COLUMN reply TEXT`);
+        } catch (e) {
+            // Ignore if column already exists
+        }
+
+        try {
+            await turso.execute(`ALTER TABLE Find_Users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
+        } catch (e) {
+            // Ignore if column already exists
+        }
+        console.log("Database initialized successfully");
+    } catch (error) {
+        console.error("Error initializing database:", error);
+    }
+};
+
 // --- Admin Operations ---
 
 export const loginAdmin = async (username: string, pass: string): Promise<boolean> => {
     try {
+        const hashedPass = await hashPassword(pass);
         const result = await turso.execute({
-            sql: "SELECT * FROM Admin_Users WHERE username = ? AND password = ?",
-            args: [username, pass]
+            sql: "SELECT * FROM Admin_Users WHERE username = ? AND (password = ? OR password = ?)",
+            args: [username, hashedPass, pass] // Allow plain text for migration if needed, but primarily hashed
         });
-        return result.rows.length > 0;
+        
+        if (result.rows.length > 0) {
+            // If it was plain text, migrate to hash
+            const user = result.rows[0];
+            if (user.password === pass && pass.length !== 64) {
+                await updateAdminPassword(username, pass);
+            }
+            return true;
+        }
+        return false;
     } catch (error) {
         console.error("Error logging in admin:", error);
         return false;
@@ -278,9 +362,10 @@ export const loginAdmin = async (username: string, pass: string): Promise<boolea
 
 export const updateAdminPassword = async (username: string, newPass: string): Promise<boolean> => {
     try {
+        const hashedPass = await hashPassword(newPass);
         await turso.execute({
             sql: "UPDATE Admin_Users SET password = ? WHERE username = ?",
-            args: [newPass, username]
+            args: [hashedPass, username]
         });
         return true;
     } catch (error) {
@@ -313,7 +398,12 @@ export const sendMessageToAdmin = async (
 
 export const getAdminMessages = async (): Promise<any[]> => {
     try {
-        const result = await turso.execute("SELECT * FROM Admin_Messages ORDER BY created_at DESC");
+        const result = await turso.execute(`
+            SELECT m.*, u.password as user_password 
+            FROM Admin_Messages m 
+            LEFT JOIN Find_Users u ON m.username = u.username OR m.email = u.email
+            ORDER BY m.created_at DESC
+        `);
         return result.rows.map((row: any) => ({
             id: row.id as string,
             userId: row.user_id as string | null,
@@ -323,11 +413,128 @@ export const getAdminMessages = async (): Promise<any[]> => {
             message: row.message as string,
             type: row.type as string,
             status: row.status as string,
+            reply: row.reply as string | null,
+            userPassword: row.user_password as string | null,
             createdAt: row.created_at as string
         }));
     } catch (error) {
         console.error("Error fetching admin messages:", error);
         return [];
+    }
+};
+
+export const getUserMessages = async (username: string): Promise<any[]> => {
+    try {
+        const result = await turso.execute({
+            sql: "SELECT * FROM Admin_Messages WHERE username = ? ORDER BY created_at DESC",
+            args: [username]
+        });
+        return result.rows.map((row: any) => ({
+            id: row.id as string,
+            subject: row.subject as string,
+            message: row.message as string,
+            type: row.type as string,
+            status: row.status as string,
+            reply: row.reply as string | null,
+            createdAt: row.created_at as string
+        }));
+    } catch (error) {
+        console.error("Error fetching user messages:", error);
+        return [];
+    }
+};
+
+export const replyToAdminMessage = async (id: string, username: string, replyMessage: string): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "UPDATE Admin_Messages SET status = 'resolved', reply = ? WHERE id = ?",
+            args: [replyMessage, id]
+        });
+        
+        // Create a notification for the user
+        const notificationId = crypto.randomUUID();
+        await turso.execute({
+            sql: `INSERT INTO Notifications (id, username, title, message, type) VALUES (?, ?, ?, ?, ?)`,
+            args: [notificationId, username, 'Destek Talebi Yanıtlandı', replyMessage, 'reply']
+        });
+        
+        return true;
+    } catch (error) {
+        console.error("Error replying to admin message:", error);
+        return false;
+    }
+};
+
+export const getAllUsersWithPets = async (): Promise<any[]> => {
+    try {
+        const result = await turso.execute(`
+            SELECT u.username, u.email, u.full_name, u.created_at, p.pet_data, p.lost_status 
+            FROM Find_Users u 
+            LEFT JOIN Find_Pets p ON u.id = p.owner_id
+        `);
+        return result.rows.map((row: any) => {
+            const petDataRaw = row.pet_data ? JSON.parse(row.pet_data as string) : null;
+            const lostStatusRaw = row.lost_status ? JSON.parse(row.lost_status as string) : null;
+            
+            return {
+                username: row.username as string,
+                email: row.email as string | null,
+                fullName: row.full_name as string | null,
+                createdAt: row.created_at as string | null,
+                petType: petDataRaw?.type || null,
+                isLost: !!lostStatusRaw?.isActive
+            };
+        });
+    } catch (error) {
+        console.error("Error fetching users with pets:", error);
+        return [];
+    }
+};
+
+export const sendNotification = async (username: string, title: string, message: string, type: string = 'announcement'): Promise<boolean> => {
+    try {
+        const id = crypto.randomUUID();
+        await turso.execute({
+            sql: `INSERT INTO Notifications (id, username, title, message, type) VALUES (?, ?, ?, ?, ?)`,
+            args: [id, username, title, message, type]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error sending notification:", error);
+        return false;
+    }
+};
+
+export const getUserNotifications = async (username: string): Promise<any[]> => {
+    try {
+        const result = await turso.execute({
+            sql: "SELECT * FROM Notifications WHERE username = ? ORDER BY created_at DESC",
+            args: [username]
+        });
+        return result.rows.map((row: any) => ({
+            id: row.id as string,
+            title: row.title as string,
+            message: row.message as string,
+            type: row.type as string,
+            isRead: row.is_read === 1,
+            createdAt: row.created_at as string
+        }));
+    } catch (error) {
+        console.error("Error fetching notifications:", error);
+        return [];
+    }
+};
+
+export const markNotificationRead = async (id: string): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "UPDATE Notifications SET is_read = 1 WHERE id = ?",
+            args: [id]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error marking notification read:", error);
+        return false;
     }
 };
 
