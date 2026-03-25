@@ -213,11 +213,13 @@ const App: React.FC = () => {
   const fetchScansForOwner = async (username: string, pet: PetProfile | null) => {
       // Only fetch logs if user is the owner
       const logs = await getRecentQrScans(username);
+      setRecentScans(logs || []);
       if (logs && logs.length > 0) {
-          setRecentScans(logs);
           if (pet?.lostStatus?.isActive) {
               setShowScanAlert(true);
           }
+      } else {
+          setShowScanAlert(false);
       }
   };
 
@@ -322,6 +324,7 @@ const App: React.FC = () => {
     setIsAdmin(false);
     setPetProfile(null);
     setShowScanAlert(false);
+    setRecentScans([]);
     localStorage.removeItem('matrixc_user_session');
     localStorage.removeItem('matrixc_admin_session');
     
