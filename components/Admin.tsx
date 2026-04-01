@@ -91,7 +91,7 @@ const SiteSettingsPanel = () => {
                         <Input 
                             value={settings['contact_email'] || ''} 
                             onChange={(e) => handleTextUpdate('contact_email', e.target.value)}
-                            placeholder="findme@matrixc.com.tr"
+                            placeholder="info@matrixc.com.tr"
                         />
                     </div>
                     <div className="space-y-1">
@@ -99,15 +99,15 @@ const SiteSettingsPanel = () => {
                         <Input 
                             value={settings['contact_instagram'] || ''} 
                             onChange={(e) => handleTextUpdate('contact_instagram', e.target.value)}
-                            placeholder="@matrixc"
+                            placeholder="https://www.instagram.com/matrixcpremium/"
                         />
                     </div>
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase">Telefon</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Telefon (WhatsApp)</label>
                         <Input 
                             value={settings['contact_phone'] || ''} 
                             onChange={(e) => handleTextUpdate('contact_phone', e.target.value)}
-                            placeholder="+90 ..."
+                            placeholder="0533 656 52 55"
                         />
                     </div>
                     <div className="space-y-1">
@@ -115,7 +115,7 @@ const SiteSettingsPanel = () => {
                         <Input 
                             value={settings['store_link'] || ''} 
                             onChange={(e) => handleTextUpdate('store_link', e.target.value)}
-                            placeholder="https://www.trendyol.com/..."
+                            placeholder="https://www.trendyol.com/magaza/kymc-teknoloji-m-1210708..."
                         />
                     </div>
                 </div>

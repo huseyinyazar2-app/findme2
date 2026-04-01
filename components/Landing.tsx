@@ -109,13 +109,6 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
                             className="w-full h-full object-contain" 
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                const parent = e.currentTarget.parentElement;
-                                if(parent && !parent.querySelector('.logo-fallback')) {
-                                    const fallback = document.createElement('div');
-                                    fallback.className = 'logo-fallback w-full h-full bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold text-xs lg:text-base';
-                                    fallback.innerText = 'Logo';
-                                    parent.appendChild(fallback);
-                                }
                             }} 
                         />
                     </div>
@@ -186,7 +179,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
                         </div>
                         <h4 className="font-bold text-xl mb-3 text-slate-800 dark:text-white">2. Hazır Tasarım Satın Alın</h4>
                         <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">Dilerseniz sisteme entegre, suya dayanıklı ve şık tasarımlı hazır QR künyeli tasmalarımızdan sipariş verebilirsiniz.</p>
-                        <a href={siteSettings['store_link'] || "https://www.trendyol.com"} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95 w-full sm:w-auto">
+                        <a href={siteSettings['store_link'] || "https://www.trendyol.com/magaza/kymc-teknoloji-m-1210708?sst=0&channelId=1"} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95 w-full sm:w-auto">
                             Mağazayı Ziyaret Et <ArrowRight size={18} />
                         </a>
                     </div>
@@ -248,9 +241,9 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
             </div>
             <div>
                 <h4 className="text-white font-bold text-lg mb-4">İletişim</h4>
-                <p className="text-sm mb-2">E-posta: <a href={`mailto:${siteSettings['contact_email'] || 'findme@matrixc.com.tr'}`} className="hover:text-white transition-colors">{siteSettings['contact_email'] || 'findme@matrixc.com.tr'}</a></p>
-                <p className="text-sm mb-2">Instagram: <a href={siteSettings['contact_instagram']?.startsWith('@') ? `https://instagram.com/${siteSettings['contact_instagram'].substring(1)}` : (siteSettings['contact_instagram'] || "https://instagram.com/matrixc")} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">{siteSettings['contact_instagram'] || '@matrixc'}</a></p>
-                {siteSettings['contact_phone'] && <p className="text-sm">Tel: <a href={`tel:${siteSettings['contact_phone']}`} className="hover:text-white transition-colors">{siteSettings['contact_phone']}</a></p>}
+                <p className="text-sm mb-2">E-posta: <a href={`mailto:${siteSettings['contact_email'] || 'info@matrixc.com.tr'}`} className="hover:text-white transition-colors">{siteSettings['contact_email'] || 'info@matrixc.com.tr'}</a></p>
+                <p className="text-sm mb-2">Instagram: <a href={siteSettings['contact_instagram'] || "https://www.instagram.com/matrixcpremium/"} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">{siteSettings['contact_instagram'] || '@matrixcpremium'}</a></p>
+                <p className="text-sm">WhatsApp: <a href={`https://wa.me/${(siteSettings['contact_phone'] || '05336565255').replace(/\s/g, '')}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">{siteSettings['contact_phone'] || '0533 656 52 55'}</a></p>
             </div>
             <div>
                 <h4 className="text-white font-bold text-lg mb-4">Geliştirici</h4>
