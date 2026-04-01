@@ -79,7 +79,12 @@ const SiteSettingsPanel = () => {
             </div>
 
             <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <h3 className="font-bold text-slate-800 dark:text-white mb-4">Tanıtım Slayt Görselleri (Sağ Kısım)</h3>
+                <div className="flex justify-between items-start mb-4">
+                    <h3 className="font-bold text-slate-800 dark:text-white">Tanıtım Slayt Görselleri (Sağ Kısım)</h3>
+                    <span className="text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-1 rounded-md">
+                        Önerilen Boyut: 16:9 (Örn: 1920x1080)
+                    </span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[1, 2, 3, 4].map(num => (
                         <div key={num} className="space-y-2">

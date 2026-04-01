@@ -123,7 +123,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
             </div>
             
             {/* Floating Badges */}
-            <div className="absolute -top-4 -right-4 lg:-top-6 lg:-right-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '3s' }}>
+            <div className="absolute z-20 -top-4 -right-4 lg:-top-6 lg:-right-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '3s' }}>
                 <div className="flex items-center gap-2 lg:gap-3">
                     <div className="bg-red-100 dark:bg-red-900/30 p-1.5 lg:p-2 rounded-full text-red-600 dark:text-red-400">
                         <MapPin size={16} className="lg:w-5 lg:h-5" />
@@ -134,7 +134,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
                     </div>
                 </div>
             </div>
-            <div className="absolute -bottom-4 -left-4 lg:-bottom-6 lg:-left-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '4s' }}>
+            <div className="absolute z-20 -bottom-4 -left-4 lg:-bottom-6 lg:-left-6 bg-white dark:bg-slate-800 p-3 lg:p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce" style={{ animationDuration: '4s' }}>
                 <div className="flex items-center gap-2 lg:gap-3">
                     <div className="bg-green-100 dark:bg-green-900/30 p-1.5 lg:p-2 rounded-full text-green-600 dark:text-green-400">
                         <ShieldCheck size={16} className="lg:w-5 lg:h-5" />
