@@ -102,12 +102,22 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
                <div className="absolute inset-0 bg-[url('https://picsum.photos/seed/pets/800/800?blur=2')] opacity-20 mix-blend-overlay" />
                <div className="relative z-10 bg-white dark:bg-slate-900 p-5 lg:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-[80%] max-w-[260px] lg:max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                   <div className="flex justify-center mb-3 lg:mb-6">
-                    <div className="w-16 h-16 lg:w-24 lg:h-24">
-                        <img src={siteSettings['logo_image'] || "/logo.png"} alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            const parent = e.currentTarget.parentElement;
-                            if(parent) parent.innerHTML = '<div class="w-full h-full bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold">Logo</div>'
-                        }} />
+                    <div className="w-16 h-16 lg:w-24 lg:h-24 flex items-center justify-center">
+                        <img 
+                            src={siteSettings['logo_image'] || "/logo.png"} 
+                            alt="MatrixC Logo" 
+                            className="w-full h-full object-contain" 
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const parent = e.currentTarget.parentElement;
+                                if(parent && !parent.querySelector('.logo-fallback')) {
+                                    const fallback = document.createElement('div');
+                                    fallback.className = 'logo-fallback w-full h-full bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold text-xs lg:text-base';
+                                    fallback.innerText = 'Logo';
+                                    parent.appendChild(fallback);
+                                }
+                            }} 
+                        />
                     </div>
                   </div>
                   <h3 className="text-lg lg:text-2xl font-black text-center mb-1 lg:mb-2">MatrixC</h3>
@@ -176,7 +186,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
                         </div>
                         <h4 className="font-bold text-xl mb-3 text-slate-800 dark:text-white">2. Hazır Tasarım Satın Alın</h4>
                         <p className="text-slate-600 dark:text-slate-400 mb-6 flex-grow">Dilerseniz sisteme entegre, suya dayanıklı ve şık tasarımlı hazır QR künyeli tasmalarımızdan sipariş verebilirsiniz.</p>
-                        <a href="https://www.trendyol.com" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95 w-full sm:w-auto">
+                        <a href={siteSettings['store_link'] || "https://www.trendyol.com"} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-orange-500/30 transition-all active:scale-95 w-full sm:w-auto">
                             Mağazayı Ziyaret Et <ArrowRight size={18} />
                         </a>
                     </div>
@@ -238,8 +248,9 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick,
             </div>
             <div>
                 <h4 className="text-white font-bold text-lg mb-4">İletişim</h4>
-                <p className="text-sm mb-2">E-posta: <a href="mailto:findme@matrixc.com.tr" className="hover:text-white transition-colors">findme@matrixc.com.tr</a></p>
-                <p className="text-sm">Instagram: <a href="https://instagram.com/matrixc" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">@matrixc</a></p>
+                <p className="text-sm mb-2">E-posta: <a href={`mailto:${siteSettings['contact_email'] || 'findme@matrixc.com.tr'}`} className="hover:text-white transition-colors">{siteSettings['contact_email'] || 'findme@matrixc.com.tr'}</a></p>
+                <p className="text-sm mb-2">Instagram: <a href={siteSettings['contact_instagram']?.startsWith('@') ? `https://instagram.com/${siteSettings['contact_instagram'].substring(1)}` : (siteSettings['contact_instagram'] || "https://instagram.com/matrixc")} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">{siteSettings['contact_instagram'] || '@matrixc'}</a></p>
+                {siteSettings['contact_phone'] && <p className="text-sm">Tel: <a href={`tel:${siteSettings['contact_phone']}`} className="hover:text-white transition-colors">{siteSettings['contact_phone']}</a></p>}
             </div>
             <div>
                 <h4 className="text-white font-bold text-lg mb-4">Geliştirici</h4>

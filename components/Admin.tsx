@@ -51,6 +51,11 @@ const SiteSettingsPanel = () => {
         }
     };
 
+    const handleTextUpdate = async (key: string, value: string) => {
+        setSettings(prev => ({ ...prev, [key]: value }));
+        await updateSiteSetting(key, value);
+    };
+
     if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
 
     return (
@@ -73,6 +78,44 @@ const SiteSettingsPanel = () => {
                             onChange={(e) => handleImageUpload('logo_image', e)}
                             className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
                             disabled={saving}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-800 dark:text-white mb-4">İletişim Bilgileri</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">E-posta</label>
+                        <Input 
+                            value={settings['contact_email'] || ''} 
+                            onChange={(e) => handleTextUpdate('contact_email', e.target.value)}
+                            placeholder="findme@matrixc.com.tr"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Instagram Adresi</label>
+                        <Input 
+                            value={settings['contact_instagram'] || ''} 
+                            onChange={(e) => handleTextUpdate('contact_instagram', e.target.value)}
+                            placeholder="@matrixc"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Telefon</label>
+                        <Input 
+                            value={settings['contact_phone'] || ''} 
+                            onChange={(e) => handleTextUpdate('contact_phone', e.target.value)}
+                            placeholder="+90 ..."
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-slate-500 uppercase">Mağaza Linki (Trendyol vb.)</label>
+                        <Input 
+                            value={settings['store_link'] || ''} 
+                            onChange={(e) => handleTextUpdate('store_link', e.target.value)}
+                            placeholder="https://www.trendyol.com/..."
                         />
                     </div>
                 </div>
