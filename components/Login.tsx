@@ -10,9 +10,10 @@ interface LoginProps {
   qrStatusMessage?: string;
   onRegisterClick?: () => void;
   onBackToHome?: () => void;
+  siteSettings?: Record<string, string>;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatusMessage, onRegisterClick, onBackToHome }) => {
+export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatusMessage, onRegisterClick, onBackToHome, siteSettings = {} }) => {
   const [username, setUsername] = useState(initialUsername || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -90,7 +91,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
             <div className="mb-8 text-center flex flex-col items-center">
                 <div className="w-24 h-24 mb-4 drop-shadow-lg">
                     <img 
-                        src="/logo.png" 
+                        src={siteSettings['logo_image'] || "/logo.png"} 
                         alt="MatrixC Logo" 
                         className="w-full h-full object-contain"
                         onError={(e) => {

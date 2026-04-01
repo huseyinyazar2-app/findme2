@@ -1,14 +1,117 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminMessages, updateMessageStatus, deleteAdminMessage, updateAdminPassword, replyToAdminMessage, getAllUsersWithPets, sendNotification } from '../services/dbService';
-import { Shield, Mail, Trash2, CheckCircle, KeyRound, LogOut, MessageSquare, AlertCircle, Send, Users, Filter, Loader2 } from 'lucide-react';
+import { getAdminMessages, updateMessageStatus, deleteAdminMessage, updateAdminPassword, replyToAdminMessage, getAllUsersWithPets, sendNotification, getSiteSettings, updateSiteSetting } from '../services/dbService';
+import { Shield, Mail, Trash2, CheckCircle, KeyRound, LogOut, MessageSquare, AlertCircle, Send, Users, Filter, Loader2, Settings } from 'lucide-react';
 import { Input } from './ui/Input';
+
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+};
+
+const SiteSettingsPanel = () => {
+    const [settings, setSettings] = useState<Record<string, string>>({});
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        const load = async () => {
+            const data = await getSiteSettings();
+            setSettings(data);
+            setLoading(false);
+        };
+        load();
+    }, []);
+
+    const handleImageUpload = async (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Dosya boyutu 2MB'dan küçük olmalıdır.");
+                return;
+            }
+            try {
+                setSaving(true);
+                const base64 = await fileToBase64(file);
+                const success = await updateSiteSetting(key, base64);
+                if (success) {
+                    setSettings(prev => ({ ...prev, [key]: base64 }));
+                } else {
+                    alert("Kaydedilirken hata oluştu.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Dosya işlenirken hata oluştu.");
+            } finally {
+                setSaving(false);
+            }
+        }
+    };
+
+    if (loading) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto" /></div>;
+
+    return (
+        <div className="space-y-6">
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-800 dark:text-white mb-4">Site Logosu</h3>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden">
+                        {settings['logo_image'] ? (
+                            <img src={settings['logo_image']} alt="Logo" className="w-full h-full object-contain p-2" />
+                        ) : (
+                            <span className="text-xs text-slate-400">Yok</span>
+                        )}
+                    </div>
+                    <div className="flex-1 w-full">
+                        <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Yeni Logo Yükle</label>
+                        <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload('logo_image', e)}
+                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
+                            disabled={saving}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-800 dark:text-white mb-4">Tanıtım Slayt Görselleri (Sağ Kısım)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4].map(num => (
+                        <div key={num} className="space-y-2">
+                            <div className="aspect-square bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden relative group">
+                                {settings[`slider_image_${num}`] ? (
+                                    <img src={settings[`slider_image_${num}`]} alt={`Slayt ${num}`} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-xs text-slate-400">Görsel {num} Yok</span>
+                                )}
+                                {saving && <div className="absolute inset-0 bg-white/50 flex items-center justify-center"><Loader2 className="animate-spin" /></div>}
+                            </div>
+                            <input 
+                                type="file" 
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(`slider_image_${num}`, e)}
+                                className="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-400"
+                                disabled={saving}
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 interface AdminProps {
   onLogout: () => void;
 }
 
 export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'messages' | 'announcements'>('messages');
+  const [activeTab, setActiveTab] = useState<'messages' | 'announcements' | 'site_settings'>('messages');
   const [messages, setMessages] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,6 +301,12 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
                     className={`flex items-center gap-2 p-3 rounded-xl font-bold transition-colors ${activeTab === 'announcements' ? 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'}`}
                 >
                     <Users size={18} /> Duyuru Gönder
+                </button>
+                <button 
+                    onClick={() => setActiveTab('site_settings')}
+                    className={`flex items-center gap-2 p-3 rounded-xl font-bold transition-colors ${activeTab === 'site_settings' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                >
+                    <Settings size={18} /> Site Ayarları
                 </button>
             </div>
           </div>
@@ -404,6 +513,19 @@ export const Admin: React.FC<AdminProps> = ({ onLogout }) => {
                             </div>
                         )}
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'site_settings' && (
+                <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-sm space-y-6">
+                    <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+                        <Settings className="text-emerald-500" /> Site Ayarları
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Web sitesindeki logo ve tanıtım görsellerini buradan güncelleyebilirsiniz.
+                    </p>
+                    
+                    <SiteSettingsPanel />
                 </div>
             )}
           </div>

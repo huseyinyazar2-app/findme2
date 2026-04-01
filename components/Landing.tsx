@@ -1,19 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, MapPin, Heart, ArrowRight, QrCode } from 'lucide-react';
 
 interface LandingProps {
   onLoginClick: () => void;
   onRegisterClick: () => void;
+  siteSettings?: Record<string, string>;
 }
 
-export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick }) => {
+const Slider = ({ settings }: { settings: Record<string, string> }) => {
+    const images = [1, 2, 3, 4].map(num => settings[`slider_image_${num}`]).filter(Boolean);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (images.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % images.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [images.length]);
+
+    if (images.length === 0) return null;
+
+    return (
+        <div className="w-full aspect-video rounded-xl overflow-hidden relative mb-4 shadow-inner">
+            {images.map((img, idx) => (
+                <img 
+                    key={idx} 
+                    src={img as string} 
+                    alt={`Slide ${idx}`} 
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentIndex ? 'opacity-100' : 'opacity-0'}`} 
+                />
+            ))}
+        </div>
+    );
+};
+
+export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick, siteSettings = {} }) => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-matrix-950 text-slate-900 dark:text-white overflow-x-hidden selection:bg-matrix-500 selection:text-white">
       {/* Navbar */}
       <nav className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
+            <img src={siteSettings['logo_image'] || "/logo.png"} alt="Logo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
           </div>
           <span className="text-xl font-black tracking-tight">FindMe<span className="text-matrix-600">.mom</span></span>
         </div>
@@ -74,7 +103,7 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
                <div className="relative z-10 bg-white dark:bg-slate-900 p-5 lg:p-8 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 w-[80%] max-w-[260px] lg:max-w-sm transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
                   <div className="flex justify-center mb-3 lg:mb-6">
                     <div className="w-16 h-16 lg:w-24 lg:h-24">
-                        <img src="/logo.png" alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
+                        <img src={siteSettings['logo_image'] || "/logo.png"} alt="MatrixC Logo" className="w-full h-full object-contain" onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             const parent = e.currentTarget.parentElement;
                             if(parent) parent.innerHTML = '<div class="w-full h-full bg-matrix-100 rounded-2xl flex items-center justify-center text-matrix-600 font-bold">Logo</div>'
@@ -83,6 +112,9 @@ export const Landing: React.FC<LandingProps> = ({ onLoginClick, onRegisterClick 
                   </div>
                   <h3 className="text-lg lg:text-2xl font-black text-center mb-1 lg:mb-2">MatrixC</h3>
                   <p className="text-center text-slate-500 dark:text-slate-400 text-[10px] lg:text-sm font-medium mb-3 lg:mb-6">Katkılarıyla hazırlanmıştır</p>
+                  
+                  <Slider settings={siteSettings} />
+
                   <div className="space-y-2 lg:space-y-3">
                     <div className="h-7 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-full flex items-center justify-center text-[9px] lg:text-xs text-slate-400 font-medium">Güvenli Altyapı</div>
                     <div className="h-7 lg:h-10 bg-slate-100 dark:bg-slate-800 rounded-xl w-5/6 mx-auto flex items-center justify-center text-[9px] lg:text-xs text-slate-400 font-medium">Hızlı Konum Tespiti</div>

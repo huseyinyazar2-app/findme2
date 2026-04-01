@@ -308,6 +308,14 @@ export const initDb = async () => {
             )
         `);
 
+        // Site_Settings table
+        await turso.execute(`
+            CREATE TABLE IF NOT EXISTS Site_Settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            )
+        `);
+
         // Insert default admin if not exists
         const adminRes = await turso.execute("SELECT * FROM Admin_Users WHERE username = 'admin'");
         if (adminRes.rows.length === 0) {
@@ -332,6 +340,35 @@ export const initDb = async () => {
         console.log("Database initialized successfully");
     } catch (error) {
         console.error("Error initializing database:", error);
+    }
+};
+
+// --- Site Settings Operations ---
+
+export const getSiteSettings = async (): Promise<Record<string, string>> => {
+    try {
+        const res = await turso.execute("SELECT * FROM Site_Settings");
+        const settings: Record<string, string> = {};
+        res.rows.forEach(row => {
+            settings[row.key as string] = row.value as string;
+        });
+        return settings;
+    } catch (error) {
+        console.error("Error getting site settings:", error);
+        return {};
+    }
+};
+
+export const updateSiteSetting = async (key: string, value: string): Promise<boolean> => {
+    try {
+        await turso.execute({
+            sql: "INSERT INTO Site_Settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            args: [key, value]
+        });
+        return true;
+    } catch (error) {
+        console.error("Error updating site setting:", error);
+        return false;
     }
 };
 

@@ -9,9 +9,10 @@ import { formatPhoneNumber, generateUUID } from '../constants';
 interface RegisterProps {
   onBackToLogin: () => void;
   onBackToHome?: () => void;
+  siteSettings?: Record<string, string>;
 }
 
-export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome }) => {
+export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome, siteSettings = {} }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -232,7 +233,7 @@ export const Register: React.FC<RegisterProps> = ({ onBackToLogin, onBackToHome 
             <div className="mb-8 text-center flex flex-col items-center">
                 <div className="w-24 h-24 mb-4 drop-shadow-lg">
                     <img 
-                        src="/logo.png" 
+                        src={siteSettings['logo_image'] || "/logo.png"} 
                         alt="MatrixC Logo" 
                         className="w-full h-full object-contain"
                         onError={(e) => {

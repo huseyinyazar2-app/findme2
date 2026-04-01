@@ -12,12 +12,13 @@ import { Landing } from './components/Landing';
 import { Admin } from './components/Admin';
 import { UserProfile, PetProfile } from './types';
 import { Settings as SettingsIcon, LogOut, FileText, PlusCircle, Siren, Info, RefreshCw, QrCode, MapPin, Loader2, Bell, XCircle, AlertTriangle, ShieldCheck, UserCheck, Globe, Router, Activity, MessageSquare } from 'lucide-react';
-import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans, loginAdmin, initDb, getUserNotifications, markNotificationRead, getUserMessages } from './services/dbService';
+import { loginOrRegister, getPetForUser, savePetForUser, updateUserProfile, checkQRCode, getPublicPetByQr, supabase as turso, logQrScan, getRecentQrScans, loginAdmin, initDb, getUserNotifications, markNotificationRead, getUserMessages, getSiteSettings } from './services/dbService';
 import { APP_VERSION } from './constants';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [petProfile, setPetProfile] = useState<PetProfile | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [userMessages, setUserMessages] = useState<any[]>([]);
@@ -63,7 +64,12 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    initDb();
+    const initialize = async () => {
+        await initDb();
+        const settings = await getSiteSettings();
+        setSiteSettings(settings);
+    };
+    initialize();
   }, []);
 
   useEffect(() => {
@@ -472,6 +478,7 @@ const App: React.FC = () => {
     if (showLanding) {
         return (
             <Landing 
+                siteSettings={siteSettings}
                 onLoginClick={() => setShowLanding(false)} 
                 onRegisterClick={() => {
                     setShowLanding(false);
@@ -490,6 +497,7 @@ const App: React.FC = () => {
                         setIsRegistering(false);
                         setShowLanding(true);
                     }}
+                    siteSettings={siteSettings}
                 />
             </div>
         );
@@ -509,6 +517,7 @@ const App: React.FC = () => {
                 qrStatusMessage={qrMessage}
                 onRegisterClick={() => setIsRegistering(true)}
                 onBackToHome={!qrCode ? () => setShowLanding(true) : undefined}
+                siteSettings={siteSettings}
             />
         </div>
     );
