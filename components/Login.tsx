@@ -138,7 +138,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, initialUsername, qrStatus
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="text-center tracking-[0.5em] font-bold text-lg"
-                    maxLength={6}
+                    maxLength={20}
                     rightElement={<KeyRound size={20} className="text-slate-400" />}
                 />
 
